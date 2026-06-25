@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HubSpot Leads Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --ink: #0f172a; --muted: #64748b;
+    --line: #e2e8f0;
+    --cold: #38bdf8; --warm: #facc15; --hot: #fb923c; --qual: #22c55e;
+    --pos:  #16a34a; --neg:  #64748b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  /* Centered header */
+  header { padding: 24px 32px; border-bottom: 1px solid var(--line); background: var(--panel);
+           text-align: center; position: relative; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+  .filters .group { display: flex; gap: 4px; background: var(--panel); padding: 4px;
+           border-radius: 8px; border: 1px solid var(--line); }
+  .filters button { border: 0; background: transparent; padding: 6px 12px; border-radius: 6px;
+           cursor: pointer; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .filters button.active { background: var(--ink); color: white; }
+  .filters input[type="date"] { border: 1px solid var(--line); padding: 6px 10px;
+           border-radius: 6px; font: inherit; font-size: 13px; background: var(--panel); }
+  .filters label { font-size: 13px; color: var(--muted); margin-left: 8px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .tile .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .value { font-size: 28px; font-weight: 600; margin-top: 6px; }
+  .tile .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .row.two-thirds { grid-template-columns: 2fr 1fr; }
+  .row.half { grid-template-columns: 1fr 1fr; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .panel h2 { margin: 0 0 4px 0; font-size: 14px; font-weight: 600; }
+  .panel .desc { margin: 0 0 16px 0; font-size: 12px; color: var(--muted); }
+  .chart-wrap { position: relative; height: 320px; cursor: pointer; }
+  .chart-wrap.small { height: 240px; }
+  .chart-wrap.tall { height: 380px; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+           margin-right: 6px; vertical-align: middle; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 500; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover { background: var(--bg); }
+
+  .pill { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; display: inline-block; }
+  .pill.neg  { background: #e2e8f0; color: #334155; }
+  .pill.b20  { background: #e0f2fe; color: #0369a1; }
+  .pill.b40  { background: #fef9c3; color: #854d0e; }
+  .pill.b60  { background: #ffedd5; color: #9a3412; }
+  .pill.b80  { background: #ecfccb; color: #4d7c0f; }
+  .pill.b100 { background: #dcfce7; color: #166534; }
+
+  .state { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
+  .state.error { color: #b91c1c; }
+  .empty-mini { padding: 20px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-panel {
+    background: white; border-radius: 12px; width: 100%; max-width: 1200px;
+    max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
+  .modal-header .count { color: var(--muted); font-size: 13px; margin-left: 8px; font-weight: 400; }
+  .modal-close {
+    background: transparent; border: 0; font-size: 24px; cursor: pointer;
+    color: var(--muted); padding: 0 8px; line-height: 1;
+  }
+  .modal-close:hover { color: var(--ink); }
+  .modal-body { padding: 8px 20px 20px; overflow-y: auto; flex: 1; }
+
+  @media (max-width: 900px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .row.two-thirds, .row.half { grid-template-columns: 1fr; }
+    main, header { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>HubSpot Leads Dashboard</h1>
+  <div class="meta" id="meta">Loading…</div>
+</header>
+<main>
+  <div class="state" id="state">Loading data…</div>
+  <div id="content" style="display:none">
+    <div class="filters">
+      <div class="group" id="presets">
+        <button data-range="7" class="active">7d</button>
+        <button data-range="30">30d</button>
+        <button data-range="90">90d</button>
+        <button data-range="365">1y</button>
+        <button data-range="all">All</button>
+      </div>
+      <label>From</label><input type="date" id="from">
+      <label>To</label><input type="date" id="to">
+      <label>Source</label>
+      <div id="source-filter-wrap" style="position:relative">
+        <button type="button" id="source-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span id="source-filter-label">All</span>
+          <span style="opacity:.5;font-size:10px">▼</span>
+        </button>
+        <div id="source-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+          <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
+            <button type="button" id="source-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
+            <button type="button" id="source-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+          </div>
+          <div id="source-filter-options"></div>
+        </div>
+      </div>
+      <button type="button" id="export-btn" title="Download the currently-filtered leads as a CSV file" style="margin-left:auto;border:1px solid var(--line);padding:6px 12px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        <span>⤓</span> Export CSV
+      </button>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="label">Leads in range</div><div class="value" id="tile-total">0</div><div class="sub" id="tile-total-sub">—</div></div>
+      <div class="tile"><div class="label">Avg per day</div><div class="value" id="tile-avg">0</div><div class="sub">leads / day</div></div>
+      <div class="tile"><div class="label">Avg lead score</div><div class="value" id="tile-score">0</div><div class="sub">avg score</div></div>
+      <div class="tile"><div class="label">High-score share</div><div class="value" id="tile-high">0%</div><div class="sub" id="tile-high-sub">Score ≥ 51</div></div>
+    </div>
+
+    <!-- Row 1: existing daily + score donut -->
+    <div class="row two-thirds">
+      <div class="panel">
+        <h2 id="daily-title">Leads created per day, stacked by score range</h2>
+        <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+        <div class="legend">
+          <span><span class="dot" style="background:#94a3b8"></span>0-negative</span>
+          <span><span class="dot" style="background:#7dd3fc"></span>1-20</span>
+          <span><span class="dot" style="background:#facc15"></span>21-40</span>
+          <span><span class="dot" style="background:#fb923c"></span>41-60</span>
+          <span><span class="dot" style="background:#84cc16"></span>61-80</span>
+          <span><span class="dot" style="background:#22c55e"></span>81-100</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Score distribution</h2>
+        <div class="chart-wrap small"><canvas id="scoreChart"></canvas></div>
+        <table style="margin-top:8px">
+          <thead><tr><th>Bucket</th><th>Count</th><th>Share</th></tr></thead>
+          <tbody id="bucket-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Row 2: NEW graphs -->
+    <div class="row half">
+      <div class="panel">
+        <h2>Open Deal — by score range</h2>
+        <div class="chart-wrap tall"><canvas id="oppChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h2>Lead &amp; MQL — Open Deal conversion rate</h2>
+        <p class="desc">Of all contacts who EVER passed through the Lead or MQL stage, what % eventually became Open Deal (full historical view).</p>
+        <div class="chart-wrap tall"><canvas id="leadMqlChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3><span id="modal-title">Contacts</span><span class="count" id="modal-count"></span></h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button type="button" id="modal-export" title="Export the contacts shown here as a CSV file" style="border:1px solid var(--line);padding:5px 10px;border-radius:6px;font:inherit;font-size:12px;background:var(--panel);cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+          <span>⤓</span> Export CSV
+        </button>
+        <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const BUCKETS = [
+  { key:'neg',  label:'0-negative', min:-Infinity, max:0,   color:'#94a3b8' },
+  { key:'b20',  label:'1-20',       min:1,         max:20,  color:'#7dd3fc' },
+  { key:'b40',  label:'21-40',      min:21,        max:40,  color:'#facc15' },
+  { key:'b60',  label:'41-60',      min:41,        max:60,  color:'#fb923c' },
+  { key:'b80',  label:'61-80',      min:61,        max:80,  color:'#84cc16' },
+  { key:'b100', label:'81-100',     min:81,        max:100, color:'#22c55e' },
+];
+
+const LIFECYCLE_LABELS = {
+  '': '—',
+  subscriber: 'Subscriber',
+  lead: 'Lead',
+  marketingqualifiedlead: 'MQL',
+  salesqualifiedlead: 'SQL',
+  opportunity: 'Opportunity',
+  customer: 'Customer',
+  evangelist: 'Evangelist',
+  other: 'Other',
+};
+
+let LEADS = [];
+let PORTAL_ID = '';
+let charts = {};
+
+const bucketFor = s => BUCKETS.find(b => s >= b.min && s <= b.max) || BUCKETS[0];
+const fmtDate = d => {
+  // Format as local YYYY-MM-DD. Using UTC (toISOString) caused leads created
+  // near midnight to fall on a different day than the user's local timezone,
+  // making cumulative counts disagree with the donut.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+};
+const parseDate = s => s ? new Date(s + 'T00:00:00') : null;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lifecycleLabel = v => LIFECYCLE_LABELS[v] !== undefined ? LIFECYCLE_LABELS[v] : v;
+
+async function load() {
+  const stateEl = document.getElementById('state');
+  try {
+    const resp = await fetch('./data/leads.json?ts=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' — has the daily refresh job run yet?');
+    const data = await resp.json();
+    LEADS = (data.leads || [])
+      .map(l => ({ ...l, createdDate: new Date(l.created) }))
+      .filter(l => !isNaN(l.createdDate));
+    PORTAL_ID = data.portalId || '';
+    const sticky = data.stickyOpenDealCount != null ? data.stickyOpenDealCount + ' ever Open Deal · ' : '';
+    document.getElementById('meta').textContent =
+      data.total.toLocaleString() + ' contacts · ' + sticky + 'Last refreshed ' + new Date(data.fetchedAt).toLocaleString();
+
+    // Populate source multi-select (checkboxes)
+    const sources = [...new Set(LEADS.map(l => l.source).filter(Boolean))].sort();
+    const optionsContainer = document.getElementById('source-filter-options');
+    sources.forEach(v => {
+      const lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px';
+      lbl.onmouseover = () => lbl.style.background = 'var(--bg)';
+      lbl.onmouseout = () => lbl.style.background = '';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = v; cb.checked = true;
+      cb.addEventListener('change', () => { updateSourceLabel(); render(); });
+      lbl.appendChild(cb);
+      const span = document.createElement('span');
+      span.textContent = v;
+      lbl.appendChild(span);
+      optionsContainer.appendChild(lbl);
+    });
+    updateSourceLabel();
+
+    document.getElementById('state').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    setPreset(7);
+  } catch (err) {
+    stateEl.className = 'state error';
+    stateEl.textContent = 'Error: ' + err.message;
+  }
+}
+
+function getSelectedSources() {
+  return new Set(
+    [...document.querySelectorAll('#source-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+function getAllSources() {
+  return [...document.querySelectorAll('#source-filter-options input')].map(cb => cb.value);
+}
+function updateSourceLabel() {
+  const total = document.querySelectorAll('#source-filter-options input').length;
+  const checked = document.querySelectorAll('#source-filter-options input:checked').length;
+  const lbl = document.getElementById('source-filter-label');
+  if (checked === 0)         lbl.textContent = 'None';
+  else if (checked === total) lbl.textContent = 'All';
+  else if (checked === 1)    lbl.textContent = document.querySelector('#source-filter-options input:checked').value;
+  else                       lbl.textContent = checked + ' selected';
+}
+
+function getFiltered() {
+  const from = parseDate(document.getElementById('from').value);
+  const to   = parseDate(document.getElementById('to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  const selectedSources = getSelectedSources();
+  const allSources = getAllSources();
+  const sourceFilterActive = selectedSources.size > 0 && selectedSources.size < allSources.length;
+  return LEADS.filter(l => {
+    if (from && l.createdDate < from) return false;
+    if (toInclusive && l.createdDate > toInclusive) return false;
+    if (sourceFilterActive && !selectedSources.has(l.source)) return false;
+    if (selectedSources.size === 0) return false;
+    return true;
+  });
+}
+
+function render() {
+  const filtered = getFiltered();
+  renderTiles(filtered);
+  renderDaily(filtered);
+  renderScoreDonut(filtered);
+  renderOpportunity(filtered);
+  renderLeadMql(filtered);
+}
+
+function renderTiles(filtered) {
+  const from = parseDate(document.getElementById('from').value);
+  const to   = parseDate(document.getElementById('to').value);
+  const total = filtered.length;
+  const days = (from && to) ? Math.max(1, Math.round((to - from)/86400000) + 1) : 1;
+  const avgScore = total ? filtered.reduce((s,l) => s + l.score, 0) / total : 0;
+  const high = filtered.filter(l => l.score >= 51).length;
+
+  document.getElementById('tile-total').textContent = total.toLocaleString();
+  document.getElementById('tile-total-sub').textContent = days + ' days in range';
+  document.getElementById('tile-avg').textContent = (total/days).toFixed(1);
+  document.getElementById('tile-score').textContent = avgScore.toFixed(1);
+  document.getElementById('tile-high').textContent = (total ? (high/total*100) : 0).toFixed(1) + '%';
+  document.getElementById('tile-high-sub').textContent = high.toLocaleString() + ' leads, score ≥ 51';
+}
+
+function getPeriod(from, to) {
+  if (!from || !to) return 'day';
+  const days = Math.round((to - from) / 86400000) + 1;
+  if (days <= 7)   return 'day';
+  if (days <= 28)  return 'week';
+  if (days <= 365) return 'month';
+  return 'year';
+}
+
+// Get the canonical key for a date based on the period (start-of-period key)
+function periodKey(date, period) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  if (period === 'day')   return y + '-' + m + '-' + d;
+  if (period === 'month') return y + '-' + m;
+  if (period === 'year')  return String(y);
+  // week: ISO-style Monday-start week, key = date of Monday
+  const day = date.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;  // shift so Monday is start
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + mondayOffset);
+  return fmtDate(monday);
+}
+
+// Pretty label for axis ticks based on period
+function periodLabel(key, period) {
+  if (period === 'day')   return key;
+  if (period === 'year')  return key;
+  if (period === 'month') {
+    const [y, m] = key.split('-');
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return names[Number(m) - 1] + ' ' + y;
+  }
+  // week: 'Week of <date>'
+  return 'Week of ' + key;
+}
+
+// Step a Date forward to the next period boundary (mutates and returns)
+function stepPeriod(date, period) {
+  if (period === 'day')   date.setDate(date.getDate() + 1);
+  else if (period === 'week')  date.setDate(date.getDate() + 7);
+  else if (period === 'month') date.setMonth(date.getMonth() + 1);
+  else                          date.setFullYear(date.getFullYear() + 1);
+  return date;
+}
+
+function renderDaily(filtered) {
+  const from = parseDate(document.getElementById('from').value);
+  const to   = parseDate(document.getElementById('to').value);
+  const period = getPeriod(from, to);
+
+  // Update the panel title to reflect the period grouping.
+  const titleByPeriod = {
+    day:   'Leads created per day, stacked by score range',
+    week:  'Leads created per week, stacked by score range',
+    month: 'Leads created per month, stacked by score range',
+    year:  'Leads created per year, stacked by score range',
+  };
+  const titleEl = document.getElementById('daily-title');
+  if (titleEl) titleEl.textContent = titleByPeriod[period];
+
+  // Aggregate filtered leads by period key (and bucket inside each period).
+  const byPeriod = new Map();
+  filtered.forEach(l => {
+    const key = periodKey(l.createdDate, period);
+    if (!byPeriod.has(key)) byPeriod.set(key, Object.fromEntries(BUCKETS.map(b => [b.key, 0])));
+    byPeriod.get(key)[bucketFor(l.score).key]++;
+  });
+
+  // Generate ordered labels covering the full range, even if a period is empty.
+  let keys = [];
+  if (from && to) {
+    const cursor = new Date(from);
+    // For week/month/year, snap cursor to start of its period
+    if (period === 'week') {
+      const day = cursor.getDay();
+      cursor.setDate(cursor.getDate() + (day === 0 ? -6 : 1 - day));
+    } else if (period === 'month') {
+      cursor.setDate(1);
+    } else if (period === 'year') {
+      cursor.setMonth(0); cursor.setDate(1);
+    }
+    while (cursor <= to) {
+      keys.push(periodKey(cursor, period));
+      stepPeriod(cursor, period);
+    }
+  } else {
+    keys = [...byPeriod.keys()].sort();
+  }
+
+  const labels = keys.map(k => periodLabel(k, period));
+
+  // Per-period new-lead totals, for the count drawn above each bar.
+  const periodDeltas = keys.map(k => {
+    const dc = byPeriod.get(k) || {};
+    return BUCKETS.reduce((s, b) => s + (dc[b.key] || 0), 0);
+  });
+
+  const datasets = BUCKETS.map(b => ({
+    label: b.label, backgroundColor: b.color, stack: 's', borderWidth: 0,
+    data: keys.map(k => (byPeriod.get(k) || {})[b.key] || 0),
+  }));
+
+  // Plugin to render the per-period total above each bar in black.
+  const dailyTopPlugin = {
+    id: 'dailyTop',
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+      if (!meta || !meta.data) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      chart.data.labels.forEach((_label, i) => {
+        const delta = periodDeltas[i];
+        if (!delta) return;
+        const bar = meta.data[i];
+        if (!bar) return;
+        ctx.fillText(delta.toString(), bar.x, bar.y - 4);
+      });
+      ctx.restore();
+    },
+  };
+
+  if (charts.daily) charts.daily.destroy();
+  charts.daily = new Chart(document.getElementById('dailyChart'), {
+    type: 'bar', data: { labels, datasets },
+    plugins: [ChartDataLabels, dailyTopPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 18 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const count = item.parsed.y;
+              const total = item.chart.data.datasets.reduce(
+                (s, ds) => s + (ds.data[item.dataIndex] || 0), 0
+              );
+              const pct = total ? (count / total * 100).toFixed(1) : '0.0';
+              return item.dataset.label + ': ' + count.toLocaleString() + ' (' + pct + '% of ' + total.toLocaleString() + ')';
+            },
+          },
+        },
+        datalabels: {
+          display: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex];
+            if (!v) return false;
+            // Compute the segment's pixel height from the Y scale, not from the
+            // bar element's animated position. The bar's .base/.y values are
+            // interpolated from 0 during the load animation, which used to make
+            // every segment look 0px tall on first render and hide all labels
+            // until a mouse hover triggered a redraw. The Y scale gives us the
+            // final pixel height immediately.
+            const scale = ctx.chart.scales.y;
+            if (scale) {
+              const px = Math.abs(scale.getPixelForValue(v) - scale.getPixelForValue(0));
+              if (px < 16) return false;  // not enough vertical room for an 11px label
+            }
+            return true;
+          },
+          color: '#0f172a',
+          font: { weight: 'bold', size: 10 },
+          anchor: 'center', align: 'center',
+          formatter: (v) => v,
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const key = keys[els[0].index];
+        const periodContacts = filtered.filter(l => periodKey(l.createdDate, period) === key);
+        const titlePrefix = period === 'day' ? 'Leads created on '
+                          : period === 'week' ? 'Leads created the week of '
+                          : period === 'month' ? 'Leads created in '
+                          : 'Leads created in ';
+        showContacts(titlePrefix + periodLabel(key, period), periodContacts);
+      },
+      scales: {
+        x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+function renderScoreDonut(filtered) {
+  const total = filtered.length;
+  const counts = BUCKETS.map(b => filtered.filter(l => l.score >= b.min && l.score <= b.max).length);
+
+  if (charts.score) charts.score.destroy();
+  charts.score = new Chart(document.getElementById('scoreChart'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: { labels: BUCKETS.map(b => b.label),
+            datasets: [{ data: counts, backgroundColor: BUCKETS.map(b => b.color), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+          color: '#0f172a',
+          font: { weight: 'bold', size: 11 },
+          formatter: (v) => v,
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const b = BUCKETS[els[0].index];
+        const ctx = filtered.filter(l => l.score >= b.min && l.score <= b.max);
+        showContacts(b.label + ' — score bucket', ctx);
+      },
+    },
+  });
+
+  document.getElementById('bucket-table').innerHTML = BUCKETS.map((b,i) => {
+    const c = counts[i];
+    const pct = total ? (c/total*100).toFixed(1) : '0.0';
+    return '<tr class="clickable" data-bucket="' + b.key + '">' +
+           '<td><span class="pill ' + b.key + '">' + b.label + '</span></td>' +
+           '<td>' + c.toLocaleString() + '</td><td>' + pct + '%</td></tr>';
+  }).join('');
+  document.querySelectorAll('#bucket-table tr.clickable').forEach(row => {
+    row.addEventListener('click', () => {
+      const key = row.dataset.bucket;
+      const b = BUCKETS.find(x => x.key === key);
+      const ctx = filtered.filter(l => l.score >= b.min && l.score <= b.max);
+      showContacts(b.label + ' — score bucket', ctx);
+    });
+  });
+}
+
+function renderOpportunity(filtered) {
+  const labels = BUCKETS.map(b => b.label);
+  const oppCounts = BUCKETS.map(b => filtered.filter(l =>
+    l.score >= b.min && l.score <= b.max && l.everOpenDeal === true
+  ).length);
+  const otherCounts = BUCKETS.map(b => filtered.filter(l =>
+    l.score >= b.min && l.score <= b.max && l.everOpenDeal !== true
+  ).length);
+  const totals = BUCKETS.map((_, i) => oppCounts[i] + otherCounts[i]);
+
+  // Convert raw counts into percentages of the bucket's total, so the bars
+  // stack to exactly 100%. Buckets with 0 contacts stay flat at 0.
+  const oppPct   = oppCounts.map((c, i)   => totals[i] ? (c / totals[i]) * 100 : 0);
+  const otherPct = otherCounts.map((c, i) => totals[i] ? (c / totals[i]) * 100 : 0);
+
+  if (charts.opp) charts.opp.destroy();
+  charts.opp = new Chart(document.getElementById('oppChart'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels,
+      datasets: [
+        // Stacked at 100% — green Open Deal on top of grey No deal
+        { label: 'Open Deal',    backgroundColor: '#16a34a', data: oppPct,
+          stack: 's', _counts: oppCounts,   _totals: totals },
+        { label: 'No open deal', backgroundColor: '#64748b', data: otherPct,
+          stack: 's', _counts: otherCounts, _totals: totals },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } },
+          // Custom click: toggle visibility AND re-scale Y axis so the
+          // remaining dataset is readable. When you hide "No open deal",
+          // the green bars at 0.15% are invisible against a 100% scale —
+          // so we drop the 100% cap and let Chart.js auto-fit.
+          onClick: (e, legendItem, legend) => {
+            const ci = legend.chart;
+            const idx = legendItem.datasetIndex;
+            const meta = ci.getDatasetMeta(idx);
+            meta.hidden = meta.hidden === null ? !ci.data.datasets[idx].hidden : null;
+            const visibleCount = ci.data.datasets.filter((_, i) =>
+              !ci.getDatasetMeta(i).hidden
+            ).length;
+            if (visibleCount < 2) {
+              ci.options.scales.y.max = undefined;
+              ci.options.scales.y.grace = '15%';
+            } else {
+              ci.options.scales.y.max = 100;
+              ci.options.scales.y.grace = 0;
+            }
+            ci.update();
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const count = item.dataset._counts[item.dataIndex];
+              const total = item.dataset._totals[item.dataIndex];
+              const pct = item.parsed.y;
+              return item.dataset.label + ': ' + count + ' (' + pct.toFixed(1) + '% of ' + total + ')';
+            },
+          },
+        },
+        datalabels: {
+          // Show percentage in white inside each segment, but only if it's
+          // a meaningful chunk (≥ ~4 percentage points) to avoid clutter.
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 4,
+          color: 'white',
+          font: { weight: 'bold', size: 11 },
+          anchor: 'center', align: 'center',
+          formatter: (value) => value.toFixed(2) + '%',
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const el = els[0];
+        const b = BUCKETS[el.index];
+        const isOpp = el.datasetIndex === 0;
+        const fullBucket = filtered.filter(l => l.score >= b.min && l.score <= b.max);
+        const displayed = fullBucket.filter(l => isOpp ? l.everOpenDeal === true : l.everOpenDeal !== true);
+        const subtitle = isOpp ? ' — with Open Deal' : ' — no Open Deal';
+        // 3rd arg = full bucket for the Export CSV button, so the user can
+        // analyse Open Deal vs No deal together in Excel via the `wasOpenDeal` column.
+        showContacts(b.label + subtitle, displayed, fullBucket);
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: true },
+        y: { beginAtZero: true, max: 100, stacked: true,
+             ticks: { callback: (v) => v + '%' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+function renderLeadMql(filtered) {
+  // Lead vs MQL — conversion rate to Open Deal as a 100% stacked bar.
+  //
+  // We now use the HISTORICAL lifecycle (everLead / everMql) from the
+  // backfilled sticky.json instead of the current lifecyclestage. This is
+  // what the Didask team actually wants to measure: "of all contacts who
+  // ever entered the Lead stage, what % eventually became Open Deal?".
+  //
+  // The current-lifecycle approach was misleading: contacts who entered as
+  // Lead and then converted to Open Deal had progressed beyond Lead (often
+  // to opportunity/customer) by the time of measurement, so they didn't
+  // appear in the Lead bar at all — making the conversion rate look near 0.
+  const groups = [
+    { key: 'lead', label: 'Lead',
+      contacts: filtered.filter(l => l.everLead === true) },
+    { key: 'mql',  label: 'MQL',
+      contacts: filtered.filter(l => l.everMql === true) },
+  ];
+
+  const totals = groups.map(g => g.contacts.length);
+  const oppCounts   = groups.map(g => g.contacts.filter(l => l.everOpenDeal === true).length);
+  const otherCounts = groups.map((g, i) => totals[i] - oppCounts[i]);
+
+  // Convert to percentages so the bars stack to 100%.
+  const oppPct   = oppCounts.map((c, i)   => totals[i] ? (c / totals[i]) * 100 : 0);
+  const otherPct = otherCounts.map((c, i) => totals[i] ? (c / totals[i]) * 100 : 0);
+
+  if (charts.leadMql) charts.leadMql.destroy();
+  charts.leadMql = new Chart(document.getElementById('leadMqlChart'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: groups.map(g => g.label + ' (' + totals[groups.indexOf(g)].toLocaleString() + ')'),
+      datasets: [
+        { label: 'Open Deal',    backgroundColor: '#16a34a', data: oppPct,
+          stack: 's', _counts: oppCounts,   _totals: totals },
+        { label: 'No open deal', backgroundColor: '#64748b', data: otherPct,
+          stack: 's', _counts: otherCounts, _totals: totals },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } },
+          // Custom click: toggle visibility AND re-scale Y axis so the
+          // remaining dataset is readable. When you hide "No open deal",
+          // the green bars at 0.15% are invisible against a 100% scale —
+          // so we drop the 100% cap and let Chart.js auto-fit.
+          onClick: (e, legendItem, legend) => {
+            const ci = legend.chart;
+            const idx = legendItem.datasetIndex;
+            const meta = ci.getDatasetMeta(idx);
+            meta.hidden = meta.hidden === null ? !ci.data.datasets[idx].hidden : null;
+            const visibleCount = ci.data.datasets.filter((_, i) =>
+              !ci.getDatasetMeta(i).hidden
+            ).length;
+            if (visibleCount < 2) {
+              ci.options.scales.y.max = undefined;
+              ci.options.scales.y.grace = '15%';
+            } else {
+              ci.options.scales.y.max = 100;
+              ci.options.scales.y.grace = 0;
+            }
+            ci.update();
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const count = item.dataset._counts[item.dataIndex];
+              const total = item.dataset._totals[item.dataIndex];
+              const pct = item.parsed.y;
+              return item.dataset.label + ': ' + count + ' (' + pct.toFixed(1) + '% of ' + total + ')';
+            },
+          },
+        },
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 4,
+          color: 'white',
+          font: { weight: 'bold', size: 12 },
+          anchor: 'center', align: 'center',
+          formatter: (value) => value.toFixed(2) + '%',
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const el = els[0];
+        const group = groups[el.index];
+        const isOpp = el.datasetIndex === 0;
+        const displayed = group.contacts.filter(l => isOpp ? l.everOpenDeal === true : l.everOpenDeal !== true);
+        const subtitle = isOpp ? ' — with Open Deal' : ' — no Open Deal';
+        // Export the full group cohort so the user can analyse Open Deal vs
+        // No deal together in Excel via the `wasOpenDeal` column.
+        showContacts(group.label + subtitle, displayed, group.contacts);
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: true },
+        y: { beginAtZero: true, max: 100, stacked: true,
+             ticks: { callback: (v) => v + '%' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+
+// --- CSV export ---
+function csvEscape(v) {
+  if (v == null) return '';
+  const s = String(v);
+  // Quote if contains comma, quote, newline, or leading/trailing whitespace
+  if (/[",\n\r]/.test(s) || /^\s|\s$/.test(s)) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function leadsToCSV(leads) {
+  const headers = [
+    'id', 'firstname', 'lastname', 'email',
+    'created', 'score', 'scoreRange', 'scoreEngagement', 'scoreLead',
+    'source', 'lifecyclestage', 'status', 'wasOpenDeal',
+    'everLead', 'everMql', 'everSql', 'everOpportunity', 'everCustomer',
+    'firstOpenDealAt', 'lifecycleAtConversion',
+    'hubspotUrl',
+  ];
+  const rows = leads.map(l => {
+    const hubspotUrl = (PORTAL_ID && l.id)
+      ? 'https://app.hubspot.com/contacts/' + PORTAL_ID + '/record/0-1/' + l.id
+      : '';
+    return [
+      l.id || '',
+      l.firstname || '',
+      l.lastname || '',
+      l.email || '',
+      l.created || '',
+      l.score != null ? l.score : '',
+      bucketFor(l.score).label,
+      l.scoreEngagement != null ? l.scoreEngagement : '',
+      l.scoreLead != null ? l.scoreLead : '',
+      l.source || '',
+      l.lifecyclestage || '',
+      l.status || '',
+      l.everOpenDeal ? 'true' : 'false',
+      l.everLead ? 'true' : 'false',
+      l.everMql ? 'true' : 'false',
+      l.everSql ? 'true' : 'false',
+      l.everOpportunity ? 'true' : 'false',
+      l.everCustomer ? 'true' : 'false',
+      l.firstOpenDealAt || '',
+      l.lifecycleAtConversion || '',
+      hubspotUrl,
+    ].map(csvEscape).join(',');
+  });
+  // BOM so Excel opens UTF-8 correctly (accents in names, etc.)
+  return '\ufeff' + headers.join(',') + '\n' + rows.join('\n');
+}
+
+function downloadCSV(filename, csvText) {
+  const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const filtered = getFiltered();
+  const stamp = fmtDate(new Date());
+  downloadCSV('hubspot-leads-' + stamp + '.csv', leadsToCSV(filtered));
+});
+
+// Track what the modal displays vs what its Export CSV button should download.
+// By default they're the same — but charts can call showContacts() with a
+// third arg to make the Export button download a wider cohort while showing
+// only a subset in the table.
+let modalContacts = [];
+let modalExportContacts = [];
+document.getElementById('modal-export').addEventListener('click', () => {
+  const stamp = fmtDate(new Date());
+  const title = (document.getElementById('modal-title').textContent || 'contacts')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+  downloadCSV('hubspot-leads-' + (title || 'segment') + '-' + stamp + '.csv', leadsToCSV(modalExportContacts));
+});
+
+// --- Modal ---
+function showContacts(title, contacts, exportContacts) {
+  modalContacts = contacts || [];
+  // If the chart passes a wider cohort for export, use it; otherwise use the
+  // displayed contacts as the export set.
+  modalExportContacts = exportContacts || modalContacts;
+  document.getElementById('modal-title').textContent = title;
+  // Make the count line show both the displayed count and (if larger) the export count.
+  const dispCount = contacts.length;
+  const expCount = modalExportContacts.length;
+  let countText = ' — ' + dispCount + ' contact' + (dispCount === 1 ? '' : 's');
+  if (expCount > dispCount) {
+    countText += ' (Export covers all ' + expCount + ')';
+  }
+  document.getElementById('modal-count').textContent = countText;
+  // Update Export button tooltip to clarify.
+  const expBtn = document.getElementById('modal-export');
+  if (expBtn) {
+    expBtn.title = (expCount > dispCount)
+      ? 'Export all ' + expCount + ' contacts in this group (Open Deal + No deal) as CSV'
+      : 'Export the ' + expCount + ' contact' + (expCount === 1 ? '' : 's') + ' shown as CSV';
+  }
+  const body = document.getElementById('modal-body');
+  if (!contacts.length) {
+    body.innerHTML = '<div class="empty-mini">No contacts in this segment.</div>';
+  } else {
+    const sorted = [...contacts].sort((a,b) => b.score - a.score);
+    const anySticky = sorted.some(l => l.everOpenDeal && l.status !== 'OPEN_DEAL');
+    body.innerHTML = '<div style="overflow-x:auto"><table>' +
+      '<thead><tr>' +
+        '<th>ID</th>' +
+        '<th>Name</th>' +
+        '<th>Email</th>' +
+        '<th>Created</th>' +
+        '<th title="Auto-score : Company &amp; Person profile (primary score, drives the bucketing)">Score</th>' +
+        '<th title="Score bucket">Range</th>' +
+        '<th title="Auto-score : Engagement &amp; Maturity">Engagement</th>' +
+        '<th title="Auto-score">Lead</th>' +
+        '<th>Source</th>' +
+        '<th>Lifecycle</th>' +
+        '<th title="The lifecycle stage when this contact first reached OPEN_DEAL">@ Open Deal</th>' +
+        '<th title="True if the contact has ever been Open Deal at any point in time">Was Open Deal</th>' +
+        '<th>Status</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+      sorted.map(l => {
+        const name = (l.firstname + ' ' + l.lastname).trim() || '—';
+        const b = bucketFor(l.score);
+        const stickyOnly = l.everOpenDeal && l.status !== 'OPEN_DEAL';
+        const statusCell = stickyOnly
+          ? '<span title="Was Open Deal previously (sticky)">★ ' + (esc(l.status) || '—') + '</span>'
+          : (esc(l.status) || '—');
+        const nameCell = (PORTAL_ID && l.id)
+          ? '<a href="https://app.hubspot.com/contacts/' + PORTAL_ID + '/record/0-1/' + esc(l.id)
+            + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:500">'
+            + esc(name) + ' ↗</a>'
+          : esc(name);
+        const engagement = (l.scoreEngagement != null ? l.scoreEngagement : 0).toFixed(0);
+        const leadScore  = (l.scoreLead != null ? l.scoreLead : 0).toFixed(0);
+        return '<tr>' +
+          '<td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)">' + esc(l.id || '—') + '</td>' +
+          '<td>' + nameCell + '</td>' +
+          '<td>' + (esc(l.email) || '—') + '</td>' +
+          '<td>' + fmtDate(l.createdDate) + '</td>' +
+          '<td><span class="pill ' + b.key + '">' + l.score.toFixed(0) + '</span></td>' +
+          '<td><span class="pill ' + b.key + '">' + b.label + '</span></td>' +
+          '<td>' + engagement + '</td>' +
+          '<td>' + leadScore + '</td>' +
+          '<td>' + (esc(l.source) || '—') + '</td>' +
+          '<td>' + esc(lifecycleLabel(l.lifecyclestage)) + '</td>' +
+          '<td>' + (l.lifecycleAtConversion ? esc(lifecycleLabel(l.lifecycleAtConversion)) : '—') + '</td>' +
+          '<td style="font-weight:500">' + (l.everOpenDeal ? '<span style="color:#16a34a">true</span>' : '<span style="color:#94a3b8">false</span>') + '</td>' +
+          '<td>' + statusCell + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>' +
+      (anySticky ? '<p style="font-size:12px;color:var(--muted);margin-top:12px">★ = previously reached Open Deal; current status has changed since (sticky).</p>' : '');
+  }
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// --- Filters ---
+function setPreset(range) {
+  const to = new Date();
+  const from = range === 'all'
+    ? (LEADS.length ? new Date(Math.min(...LEADS.map(l => l.createdDate))) : to)
+    : new Date(Date.now() - (Number(range) - 1) * 86400000);
+  document.getElementById('from').value = fmtDate(from);
+  document.getElementById('to').value = fmtDate(to);
+  render();
+}
+document.querySelectorAll('#presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    setPreset(btn.dataset.range);
+  });
+});
+['from','to'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+  document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
+  render();
+}));
+// Source multi-select panel: open/close
+document.getElementById('source-filter-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const panel = document.getElementById('source-filter-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('source-filter-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('source-filter-panel').style.display = 'none';
+  }
+});
+document.getElementById('source-filter-all').addEventListener('click', () => {
+  document.querySelectorAll('#source-filter-options input').forEach(cb => cb.checked = true);
+  updateSourceLabel(); render();
+});
+document.getElementById('source-filter-none').addEventListener('click', () => {
+  document.querySelectorAll('#source-filter-options input').forEach(cb => cb.checked = false);
+  updateSourceLabel(); render();
+});
+
+load();
+</script>
+</body>
+</html>
