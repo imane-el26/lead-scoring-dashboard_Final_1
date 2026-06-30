@@ -39,6 +39,17 @@ PROPERTIES = [
     SCORE_PROPERTY,
     "auto_score_engagement_maturity",
     "auto_score_lead",
+    # Contact-level scoring criteria — feed the in-browser scoring simulator.
+    "hs_seniority",
+    "job_department",
+    "hs_email_optout",
+]
+
+# Company-level scoring criteria — fetched separately via /companies/batch/read
+# (these are properties on the contact's associated Primary Company, NOT on the contact).
+COMPANY_PROPERTIES = [
+    "type_d_acteur",
+    "type_dacteur__other",
 ]
 
 
@@ -74,7 +85,13 @@ def hubspot_request(path, method="GET", body=None, params=None):
 
 
 def fetch_all_contacts():
-    """Paginate through every contact in the portal."""
+    """Paginate through every contact in the portal.
+
+    We also request the `associations.companies` so each contact comes
+    back with its associated company IDs — needed to look up `type_d_acteur`
+    on the company side (those are company-level properties, not contact
+    properties).
+    """
     print("Fetching contacts (score property: " + SCORE_PROPERTY + ")...")
     contacts = []
     after = None
@@ -82,6 +99,7 @@ def fetch_all_contacts():
         params = {
             "limit": "100",
             "properties": ",".join(PROPERTIES),
+            "associations": "companies",
         }
         if after:
             params["after"] = after
@@ -95,6 +113,60 @@ def fetch_all_contacts():
             break
     print("Fetched " + str(len(contacts)) + " contacts.")
     return contacts
+
+
+def primary_company_id(contact):
+    """Find the primary company ID for a contact.
+
+    HubSpot returns associations under `associations.companies.results` as a
+    list of {id, type} objects. The PRIMARY association uses the type code
+    `contact_to_company` (id 1 in the legacy v3 API) which appears as the
+    first entry by default — but to be safe we look for it explicitly.
+    Falls back to the first company in the list if no explicit "primary"
+    type is found.
+    """
+    assocs = (contact.get("associations") or {}).get("companies") or {}
+    results = assocs.get("results") or []
+    if not results:
+        return None
+    # Look for the explicit primary association type. HubSpot uses several
+    # type names depending on API version: "contact_to_company" (label-free
+    # primary), or the typeId 1.
+    for r in results:
+        t = r.get("type") or ""
+        if t == "contact_to_company" or r.get("typeId") == 1:
+            return str(r.get("id"))
+    # Otherwise return the first one as a best-effort fallback.
+    return str(results[0].get("id"))
+
+
+def batch_fetch_companies(company_ids, props):
+    """Batch-read companies (max 100 per call) and return a dict
+    {companyId: {prop1: value, prop2: value, ...}}."""
+    out = {}
+    company_ids = list({c for c in company_ids if c})  # de-dup, drop empties
+    print("Fetching " + str(len(company_ids)) + " unique companies for "
+          + ", ".join(props) + " ...")
+    for i in range(0, len(company_ids), 100):
+        chunk = company_ids[i:i+100]
+        body = {
+            "inputs": [{"id": cid} for cid in chunk],
+            "properties": props,
+        }
+        try:
+            data = hubspot_request("/crm/v3/objects/companies/batch/read",
+                                   method="POST", body=body)
+            for r in data.get("results", []):
+                cid = str(r.get("id"))
+                out[cid] = r.get("properties") or {}
+        except Exception as e:
+            print("  warn: company batch " + str(i) + "-" + str(i+len(chunk))
+                  + " failed: " + str(e))
+        if (i + 100) % 500 == 0:
+            print("  companies fetched: " + str(min(i + 100, len(company_ids)))
+                  + "/" + str(len(company_ids)))
+    print("Done. " + str(len(out)) + " companies cached.")
+    return out
 
 
 def get_contact_history(contact_id, props):
@@ -187,6 +259,7 @@ def load_sticky():
             "openDealIds": [], "conversions": {},
             "everLeadIds": [], "everMqlIds": [], "everSqlIds": [],
             "everSubscriberIds": [], "everOpportunityIds": [], "everCustomerIds": [],
+            "companies": {},
         }
 
     # Normalize: keep all fields, default missing ones to empty.
@@ -199,6 +272,9 @@ def load_sticky():
         "everSubscriberIds":  data.get("everSubscriberIds", []),
         "everOpportunityIds": data.get("everOpportunityIds", []),
         "everCustomerIds":    data.get("everCustomerIds", []),
+        # Cache of company-level scoring data:
+        # {companyId: {"type_d_acteur": "...", "type_dacteur__other": "..."}}
+        "companies":          data.get("companies", {}),
     }
 
 
@@ -267,24 +343,39 @@ def main():
             print("  enriched " + str(i + 1) + "/" + str(len(new_open_deal_ids)))
         time.sleep(0.1)  # gentle rate limit
 
-    # Save updated sticky
-    sticky_out = {
-        "openDealIds": sorted(sticky_ids),
-        "conversions": conversions,
-        "everLeadIds":        sorted(ever_lead_ids),
-        "everMqlIds":         sorted(ever_mql_ids),
-        "everSqlIds":         sorted(ever_sql_ids),
-        "everSubscriberIds":  sorted(ever_subscriber_ids),
-        "everOpportunityIds": sorted(ever_opportunity_ids),
-        "everCustomerIds":    sorted(ever_customer_ids),
-    }
-    write_sticky(sticky_out)
     print("Sticky Open Deal IDs: " + str(len(sticky_ids)) + " total ("
           + str(len(new_open_deal_ids)) + " new this run, "
           + str(len(sticky_ids) - len(new_open_deal_ids)) + " pre-existing).")
     print("Conversions tracked: " + str(len(conversions)))
     print("Ever Lead: " + str(len(ever_lead_ids)) + " | Ever MQL: " + str(len(ever_mql_ids))
           + " | Ever SQL: " + str(len(ever_sql_ids)))
+
+    # ----- Company resolution for the simulator -----
+    # type_d_acteur and type_dacteur__other are COMPANY-level properties, not
+    # contact-level. We resolve each contact's primary company, dedupe, and
+    # batch-fetch only the companies we don't already have cached.
+    companies_cache = dict(sticky["companies"])  # copy: {companyId: {props}}
+
+    # Map contact_id -> primary company_id
+    contact_to_company = {}
+    for c in contacts:
+        cid = str(c.get("id"))
+        company_id = primary_company_id(c)
+        if company_id:
+            contact_to_company[cid] = company_id
+
+    print("Resolved primary company for " + str(len(contact_to_company))
+          + "/" + str(len(contacts)) + " contacts.")
+
+    # Find which company IDs we still need to fetch (not in cache)
+    needed_company_ids = {
+        cid for cid in contact_to_company.values() if cid not in companies_cache
+    }
+    if needed_company_ids:
+        new_company_props = batch_fetch_companies(list(needed_company_ids), COMPANY_PROPERTIES)
+        companies_cache.update(new_company_props)
+    else:
+        print("All companies already in cache — no extra API call needed.")
 
     # Now build leads.json
     leads = []
@@ -297,6 +388,10 @@ def main():
                 return float(v) if v not in (None, "") else 0.0
             except (TypeError, ValueError):
                 return 0.0
+
+        # Look up the contact's primary company data for company-level criteria
+        company_id = contact_to_company.get(cid)
+        company_props = companies_cache.get(company_id, {}) if company_id else {}
 
         conv = conversions.get(cid)
         lead = {
@@ -317,11 +412,37 @@ def main():
             "everSql": cid in ever_sql_ids,
             "everOpportunity": cid in ever_opportunity_ids,
             "everCustomer": cid in ever_customer_ids,
+            # Raw scoring-criteria values from HubSpot — fed to the in-browser
+            # scoring simulator. Contact-level props come from the contact itself,
+            # company-level props come from the primary company association.
+            "criteria": {
+                "hs_seniority":         props.get("hs_seniority") or "",
+                "job_department":       props.get("job_department") or "",
+                "type_d_acteur":        company_props.get("type_d_acteur") or "",
+                "type_dacteur__other":  company_props.get("type_dacteur__other") or "",
+                "hs_email_optout":      props.get("hs_email_optout") or "",
+            },
         }
         if conv:
             lead["firstOpenDealAt"] = conv.get("firstOpenDealAt")
             lead["lifecycleAtConversion"] = conv.get("lifecycleAtConversion")
         leads.append(lead)
+
+    # Save sticky AT THE END so the companies cache (just populated above)
+    # is persisted for future runs.
+    sticky_out = {
+        "openDealIds":        sorted(sticky_ids),
+        "conversions":        conversions,
+        "everLeadIds":        sorted(ever_lead_ids),
+        "everMqlIds":         sorted(ever_mql_ids),
+        "everSqlIds":         sorted(ever_sql_ids),
+        "everSubscriberIds":  sorted(ever_subscriber_ids),
+        "everOpportunityIds": sorted(ever_opportunity_ids),
+        "everCustomerIds":    sorted(ever_customer_ids),
+        "companies":          companies_cache,
+    }
+    write_sticky(sticky_out)
+    print("Companies cached: " + str(len(companies_cache)))
 
     out = {
         "fetchedAt": datetime.utcnow().isoformat() + "Z",
