@@ -1,0 +1,46 @@
+name: Refresh leads
+
+on:
+  schedule:
+    - cron: "23 23 * * *"  # daily at 23:23 UTC = 01:23 Paris (summer) / 00:23 Paris (winter)
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch leads from HubSpot
+        env:
+          HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+          SCORE_PROPERTY: auto_score_company_person_profile
+          HUBSPOT_PORTAL_ID: "3073236"
+        run: python scripts/fetch_leads.py
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: refresh leads $(date -u +%Y-%m-%d)"
+            for i in 1 2 3; do
+              if git push; then
+                echo "Push succeeded on attempt $i."
+                exit 0
+              fi
+              echo "Push attempt $i failed — pulling with rebase and retrying."
+              git pull --rebase origin main
+            done
+            echo "Push failed after 3 attempts."
+            exit 1
+          fi
