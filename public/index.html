@@ -1,0 +1,2004 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HubSpot Leads Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --ink: #0f172a; --muted: #64748b;
+    --line: #e2e8f0;
+    --cold: #38bdf8; --warm: #facc15; --hot: #fb923c; --qual: #22c55e;
+    --pos:  #16a34a; --neg:  #64748b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  /* Centered header */
+  header { padding: 24px 32px; border-bottom: 1px solid var(--line); background: var(--panel);
+           text-align: center; position: relative; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+
+  /* Top-level tabs */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--line);
+    padding-bottom: 0;
+  }
+  .tabs button {
+    border: 0; background: transparent; padding: 10px 16px;
+    font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tabs button.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tabs button:hover:not(.active) { color: var(--ink); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Scoring simulator — two-column layout with collapsible sidebar */
+  .sim-layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+  @media (max-width: 1100px) { .sim-layout { grid-template-columns: 1fr; } }
+  .sim-sidebar { display: flex; flex-direction: column; gap: 8px; }
+  .sim-sidebar .scoring-section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; padding: 0;
+  }
+  .sim-sidebar .scoring-section summary {
+    cursor: pointer; padding: 12px 16px; list-style: none;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    user-select: none;
+  }
+  .sim-sidebar .scoring-section summary::-webkit-details-marker { display: none; }
+  .sim-sidebar .scoring-section summary::after {
+    content: '▸'; color: var(--muted); font-size: 12px; transition: transform 0.15s;
+  }
+  .sim-sidebar .scoring-section[open] summary::after { transform: rotate(90deg); }
+  .sim-sidebar .scoring-section summary:hover { background: var(--bg); }
+  .sim-sidebar .sum-title { font-weight: 600; font-size: 13px; }
+  .sim-sidebar .sum-prop { font-size: 11px; color: var(--muted); }
+  .sim-sidebar .scoring-section[open] .sum-prop { display: none; }
+  .sim-sidebar .sub-heading {
+    font-size: 11px; color: var(--muted); padding: 8px 16px 4px;
+    border-top: 1px solid var(--bg); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .scoring-row {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 6px 16px; border-top: 1px solid var(--bg); font-size: 13px;
+  }
+  .scoring-row .label { flex: 1; }
+  .scoring-row input[type="number"] {
+    width: 64px; border: 1px solid var(--line); padding: 4px 8px; border-radius: 6px;
+    font: inherit; font-size: 13px; text-align: right;
+  }
+  .scoring-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .scoring-actions button {
+    border: 1px solid var(--line); background: var(--panel); padding: 6px 12px;
+    border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .scoring-actions button.primary { background: var(--ink); color: white; border-color: var(--ink); }
+  .scoring-actions .info { font-size: 12px; color: var(--muted); margin-left: 8px; }
+  .scoring-actions .clickable-count { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+  .scoring-actions .clickable-count:hover { color: var(--ink); }
+  .scoring-note {
+    background: #fef9c3; border-left: 3px solid #facc15; padding: 12px 16px; border-radius: 6px;
+    font-size: 13px; color: #713f12; margin-bottom: 20px;
+  }
+  .filters .group { display: flex; gap: 4px; background: var(--panel); padding: 4px;
+           border-radius: 8px; border: 1px solid var(--line); }
+  .filters button { border: 0; background: transparent; padding: 6px 12px; border-radius: 6px;
+           cursor: pointer; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .filters button.active { background: var(--ink); color: white; }
+  .filters input[type="date"] { border: 1px solid var(--line); padding: 6px 10px;
+           border-radius: 6px; font: inherit; font-size: 13px; background: var(--panel); }
+  .filters label { font-size: 13px; color: var(--muted); margin-left: 8px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .tile .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile .value { font-size: 28px; font-weight: 600; margin-top: 6px; }
+  .tile .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .row.two-thirds { grid-template-columns: 2fr 1fr; }
+  .row.half { grid-template-columns: 1fr 1fr; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .panel h2 { margin: 0 0 4px 0; font-size: 14px; font-weight: 600; }
+  .panel .desc { margin: 0 0 16px 0; font-size: 12px; color: var(--muted); }
+  .chart-wrap { position: relative; height: 320px; cursor: pointer; }
+  .chart-wrap.small { height: 240px; }
+  .chart-wrap.tall { height: 380px; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+           margin-right: 6px; vertical-align: middle; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 500; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover { background: var(--bg); }
+
+  .pill { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; display: inline-block; }
+  .pill.neg  { background: #e2e8f0; color: #334155; }
+  .pill.b20  { background: #e0f2fe; color: #0369a1; }
+  .pill.b40  { background: #fef9c3; color: #854d0e; }
+  .pill.b60  { background: #ffedd5; color: #9a3412; }
+  .pill.b80  { background: #ecfccb; color: #4d7c0f; }
+  .pill.b100 { background: #dcfce7; color: #166534; }
+
+  .state { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
+  .state.error { color: #b91c1c; }
+  .empty-mini { padding: 20px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-panel {
+    background: white; border-radius: 12px; width: 100%; max-width: 1200px;
+    max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
+  .modal-header .count { color: var(--muted); font-size: 13px; margin-left: 8px; font-weight: 400; }
+  .modal-close {
+    background: transparent; border: 0; font-size: 24px; cursor: pointer;
+    color: var(--muted); padding: 0 8px; line-height: 1;
+  }
+  .modal-close:hover { color: var(--ink); }
+  .modal-body { padding: 8px 20px 20px; overflow-y: auto; flex: 1; }
+
+  @media (max-width: 900px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .row.two-thirds, .row.half { grid-template-columns: 1fr; }
+    main, header { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>HubSpot Leads Dashboard</h1>
+  <div class="meta" id="meta">Loading…</div>
+</header>
+<main>
+  <div class="state" id="state">Loading data…</div>
+  <div id="content" style="display:none">
+    <div class="tabs">
+      <button id="tab-dashboard" class="active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button id="tab-simulator" onclick="switchTab('simulator')">Scoring simulator</button>
+    </div>
+
+    <!-- ========== DASHBOARD TAB ========== -->
+    <div id="panel-dashboard" class="tab-panel active">
+    <div class="filters">
+      <div class="group" id="presets">
+        <button data-range="7" class="active">7d</button>
+        <button data-range="30">30d</button>
+        <button data-range="90">90d</button>
+        <button data-range="365">1y</button>
+        <button data-range="all">All</button>
+      </div>
+      <label>From</label><input type="date" id="from">
+      <label>To</label><input type="date" id="to">
+      <label>Source</label>
+      <div id="source-filter-wrap" style="position:relative">
+        <button type="button" id="source-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span id="source-filter-label">All</span>
+          <span style="opacity:.5;font-size:10px">▼</span>
+        </button>
+        <div id="source-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+          <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
+            <button type="button" id="source-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
+            <button type="button" id="source-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+          </div>
+          <div id="source-filter-options"></div>
+        </div>
+      </div>
+      <button type="button" id="export-btn" title="Download the currently-filtered leads as a CSV file" style="margin-left:auto;border:1px solid var(--line);padding:6px 12px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        <span>⤓</span> Export CSV
+      </button>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="label">Leads in range</div><div class="value" id="tile-total">0</div><div class="sub" id="tile-total-sub">—</div></div>
+      <div class="tile"><div class="label">Avg per day</div><div class="value" id="tile-avg">0</div><div class="sub">leads / day</div></div>
+      <div class="tile"><div class="label">Avg lead score</div><div class="value" id="tile-score">0</div><div class="sub">avg score</div></div>
+      <div class="tile"><div class="label">High-score share</div><div class="value" id="tile-high">0%</div><div class="sub" id="tile-high-sub">Score ≥ 51</div></div>
+    </div>
+
+    <!-- Row 1: existing daily + score donut -->
+    <div class="row two-thirds">
+      <div class="panel">
+        <h2 id="daily-title">Leads created per day, stacked by score range</h2>
+        <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+        <div class="legend">
+          <span><span class="dot" style="background:#94a3b8"></span>0-negative</span>
+          <span><span class="dot" style="background:#7dd3fc"></span>1-20</span>
+          <span><span class="dot" style="background:#facc15"></span>21-40</span>
+          <span><span class="dot" style="background:#fb923c"></span>41-60</span>
+          <span><span class="dot" style="background:#84cc16"></span>61-80</span>
+          <span><span class="dot" style="background:#22c55e"></span>81-100</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Score distribution</h2>
+        <div class="chart-wrap small"><canvas id="scoreChart"></canvas></div>
+        <table style="margin-top:8px">
+          <thead><tr><th>Bucket</th><th>Count</th><th>Share</th></tr></thead>
+          <tbody id="bucket-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Row 2: NEW graphs -->
+    <div class="row half">
+      <div class="panel">
+        <h2>Open Deal — by score range</h2>
+        <div class="chart-wrap tall"><canvas id="oppChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h2>Lead &amp; MQL — Open Deal conversion rate</h2>
+        <p class="desc">Defined by Auto-Score (Company &amp; Persona Profile): Non-MQL Lead = score &lt; 50, MQL = score ≥ 50. Conversion = % of contacts in each group who have ever been Open Deal.</p>
+        <div class="chart-wrap tall"><canvas id="leadMqlChart"></canvas></div>
+      </div>
+    </div>
+    </div><!-- end panel-dashboard -->
+
+    <!-- ========== SCORING SIMULATOR TAB ========== -->
+    <div id="panel-simulator" class="tab-panel">
+      <div class="scoring-note">
+        <strong>Scoring simulator.</strong> Open any section on the left and change a score — the charts on the right update instantly. Click <em>Reset to current HubSpot grid</em> to revert to the official values.
+      </div>
+
+      <div class="scoring-actions">
+        <button onclick="resetScoringGrid()">Reset to current HubSpot grid</button>
+        <button id="save-grid-btn" onclick="saveScoringGridExplicit()"
+                style="display:none;background:#10b981;color:white;border-color:#10b981;font-weight:600;"
+                title="Save your custom scoring grid to this browser. It will persist across reloads and deployments.">
+          💾 Save changes
+        </button>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-left:8px">
+          <input type="checkbox" id="exclude-notfound-toggle" checked
+                 onchange="onExcludeMissingToggle()"
+                 title="When checked, contacts whose Seniority or Department equals 'Value not found' or 'Contact not found' are removed from every chart and tile in this tab.">
+          <span>Exclude 'Value not found' &amp; 'Contact not found'</span>
+          <span class="info clickable-count" id="excluded-count-notfound"
+                style="margin-left:4px"
+                onclick="showExcludedContactsModal('notfound')"></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-left:8px">
+          <input type="checkbox" id="exclude-empty-toggle"
+                 onchange="onExcludeMissingToggle()"
+                 title="When checked, contacts whose Seniority AND Department are BOTH empty / null are removed from every chart and tile in this tab. Contacts with only one empty field are kept.">
+          <span>Exclude contacts where Seniority &amp; Department are both empty</span>
+          <span class="info clickable-count" id="excluded-count-empty"
+                style="margin-left:4px"
+                onclick="showExcludedContactsModal('empty')"></span>
+        </label>
+        <span class="info" id="sim-info">Using current HubSpot grid</span>
+      </div>
+
+      <div class="sim-layout">
+        <!-- LEFT: collapsible scoring sections -->
+        <aside class="sim-sidebar">
+          <details class="scoring-section" id="sim-seniority">
+            <summary>
+              <span class="sum-title">Employment Seniority</span>
+              <span class="sum-prop"><code>hs_seniority</code></span>
+            </summary>
+          </details>
+          <details class="scoring-section" id="sim-department">
+            <summary>
+              <span class="sum-title">Job Department</span>
+              <span class="sum-prop"><code>job_department</code></span>
+            </summary>
+          </details>
+          <details class="scoring-section" id="sim-acteur">
+            <summary>
+              <span class="sum-title">Type d'acteur (Company)</span>
+              <span class="sum-prop"><code>type_d_acteur</code></span>
+            </summary>
+          </details>
+          <details class="scoring-section" id="sim-acteur-other">
+            <summary>
+              <span class="sum-title">Type d'acteur (Other)</span>
+              <span class="sum-prop"><code>type_dacteur__other</code></span>
+            </summary>
+          </details>
+          <details class="scoring-section" id="sim-contact">
+            <summary>
+              <span class="sum-title">Contact flags</span>
+              <span class="sum-prop"><code>hs_email_optout</code></span>
+            </summary>
+          </details>
+        </aside>
+
+        <!-- RIGHT: simulated dashboard -->
+        <section class="sim-main">
+          <div class="filters">
+            <div class="group" id="sim-presets">
+              <button data-range="7" class="active">7d</button>
+              <button data-range="30">30d</button>
+              <button data-range="90">90d</button>
+              <button data-range="365">1y</button>
+              <button data-range="all">All</button>
+            </div>
+            <label>From</label><input type="date" id="sim-from">
+            <label>To</label><input type="date" id="sim-to">
+          </div>
+
+          <div class="tiles">
+            <div class="tile"><div class="label">Leads in range</div><div class="value" id="sim-tile-total">0</div><div class="sub" id="sim-tile-total-sub">—</div></div>
+            <div class="tile"><div class="label">Avg per day</div><div class="value" id="sim-tile-avg">0</div><div class="sub">leads / day</div></div>
+            <div class="tile"><div class="label">Avg lead score</div><div class="value" id="sim-tile-score">0</div><div class="sub">avg score (simulated)</div></div>
+            <div class="tile"><div class="label">High-score share</div><div class="value" id="sim-tile-high">0%</div><div class="sub" id="sim-tile-high-sub">Score ≥ 51</div></div>
+          </div>
+
+          <!-- Open Deal + Lead/MQL conversion appear FIRST in the simulator
+               since they are the main signals the team iterates on. -->
+          <div class="row half">
+            <div class="panel">
+              <h2>Open Deal — by score range (simulated)</h2>
+              <div class="chart-wrap tall"><canvas id="simOppChart"></canvas></div>
+            </div>
+            <div class="panel">
+              <h2>Lead &amp; MQL — Open Deal conversion rate (simulated)</h2>
+              <p class="desc">Non-MQL Lead = simulated score &lt; 50, MQL = simulated score ≥ 50.</p>
+              <div class="chart-wrap tall"><canvas id="simLeadMqlChart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="row two-thirds">
+            <div class="panel">
+              <h2 id="sim-daily-title">Leads created per day, stacked by score range (simulated)</h2>
+              <div class="chart-wrap"><canvas id="simDailyChart"></canvas></div>
+              <div class="legend">
+                <span><span class="dot" style="background:#94a3b8"></span>0-negative</span>
+                <span><span class="dot" style="background:#7dd3fc"></span>1-20</span>
+                <span><span class="dot" style="background:#facc15"></span>21-40</span>
+                <span><span class="dot" style="background:#fb923c"></span>41-60</span>
+                <span><span class="dot" style="background:#84cc16"></span>61-80</span>
+                <span><span class="dot" style="background:#22c55e"></span>81-100</span>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Score distribution (simulated)</h2>
+              <div class="chart-wrap small"><canvas id="simScoreChart"></canvas></div>
+              <table style="margin-top:8px">
+                <thead><tr><th>Bucket</th><th>Count</th><th>Share</th></tr></thead>
+                <tbody id="sim-bucket-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div><!-- end panel-simulator -->
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3><span id="modal-title">Contacts</span><span class="count" id="modal-count"></span></h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button type="button" id="modal-export" title="Export the contacts shown here as a CSV file" style="border:1px solid var(--line);padding:5px 10px;border-radius:6px;font:inherit;font-size:12px;background:var(--panel);cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+          <span>⤓</span> Export CSV
+        </button>
+        <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const BUCKETS = [
+  { key:'neg',  label:'0-negative', min:-Infinity, max:0,   color:'#94a3b8' },
+  { key:'b20',  label:'1-20',       min:1,         max:20,  color:'#7dd3fc' },
+  { key:'b40',  label:'21-40',      min:21,        max:40,  color:'#facc15' },
+  { key:'b60',  label:'41-60',      min:41,        max:60,  color:'#fb923c' },
+  { key:'b80',  label:'61-80',      min:61,        max:80,  color:'#84cc16' },
+  { key:'b100', label:'81-100',     min:81,        max:100, color:'#22c55e' },
+];
+
+const LIFECYCLE_LABELS = {
+  '': '—',
+  subscriber: 'Subscriber',
+  lead: 'Lead',
+  marketingqualifiedlead: 'MQL',
+  salesqualifiedlead: 'SQL',
+  opportunity: 'Opportunity',
+  customer: 'Customer',
+  evangelist: 'Evangelist',
+  other: 'Other',
+};
+
+let LEADS = [];
+let PORTAL_ID = '';
+let charts = {};
+
+const bucketFor = s => BUCKETS.find(b => s >= b.min && s <= b.max) || BUCKETS[0];
+const fmtDate = d => {
+  // Format as local YYYY-MM-DD. Using UTC (toISOString) caused leads created
+  // near midnight to fall on a different day than the user's local timezone,
+  // making cumulative counts disagree with the donut.
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+};
+const parseDate = s => s ? new Date(s + 'T00:00:00') : null;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lifecycleLabel = v => LIFECYCLE_LABELS[v] !== undefined ? LIFECYCLE_LABELS[v] : v;
+
+async function load() {
+  const stateEl = document.getElementById('state');
+  try {
+    // Step 1: try the index file (multi-chunk dataset). If it exists, use it.
+    // Otherwise fall back to a single legacy leads.json.
+    let data = null;
+    let chunkUrls = [];
+
+    try {
+      const idxResp = await fetch('./data/leads-index.json?ts=' + Date.now());
+      if (idxResp.ok) {
+        const idx = await idxResp.json();
+        // idx looks like: { fetchedAt, total, portalId, chunks: ['leads-0.json', ...] }
+        chunkUrls = (idx.chunks || []).map(c => './data/' + c);
+        // Carry over meta to use after merging chunks
+        data = {
+          fetchedAt: idx.fetchedAt,
+          total: idx.total,
+          scoreProperty: idx.scoreProperty,
+          portalId: idx.portalId,
+          stickyOpenDealCount: idx.stickyOpenDealCount,
+          leads: [],
+        };
+        stateEl.textContent = 'Loading ' + chunkUrls.length + ' data chunks...';
+      }
+    } catch (_) { /* no index file — fall back below */ }
+
+    if (chunkUrls.length > 0) {
+      // Fetch all chunks in parallel, then concatenate their leads arrays.
+      const chunkData = await Promise.all(chunkUrls.map(async (url, i) => {
+        const r = await fetch(url + '?ts=' + Date.now());
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' on chunk ' + i);
+        return r.json();
+      }));
+      for (const c of chunkData) {
+        if (c.leads) data.leads.push(...c.leads);
+      }
+    } else {
+      // Legacy single-file path (kept for backward compat with old deployments)
+      const resp = await fetch('./data/leads.json?ts=' + Date.now());
+      if (!resp.ok) throw new Error('HTTP ' + resp.status + ' — has the daily refresh job run yet?');
+      data = await resp.json();
+    }
+
+    LEADS = (data.leads || [])
+      .map(l => ({ ...l, createdDate: new Date(l.created) }))
+      .filter(l => !isNaN(l.createdDate));
+    PORTAL_ID = data.portalId || '';
+    const sticky = data.stickyOpenDealCount != null ? data.stickyOpenDealCount + ' ever Open Deal · ' : '';
+    document.getElementById('meta').textContent =
+      data.total.toLocaleString() + ' contacts · ' + sticky + 'Last refreshed ' + new Date(data.fetchedAt).toLocaleString();
+
+    // Populate source multi-select (checkboxes)
+    const sources = [...new Set(LEADS.map(l => l.source).filter(Boolean))].sort();
+    const optionsContainer = document.getElementById('source-filter-options');
+    sources.forEach(v => {
+      const lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px';
+      lbl.onmouseover = () => lbl.style.background = 'var(--bg)';
+      lbl.onmouseout = () => lbl.style.background = '';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = v; cb.checked = true;
+      cb.addEventListener('change', () => { updateSourceLabel(); render(); });
+      lbl.appendChild(cb);
+      const span = document.createElement('span');
+      span.textContent = v;
+      lbl.appendChild(span);
+      optionsContainer.appendChild(lbl);
+    });
+    updateSourceLabel();
+
+    document.getElementById('state').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    setPreset(7);
+  } catch (err) {
+    stateEl.className = 'state error';
+    stateEl.textContent = 'Error: ' + err.message;
+  }
+}
+
+function getSelectedSources() {
+  return new Set(
+    [...document.querySelectorAll('#source-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+function getAllSources() {
+  return [...document.querySelectorAll('#source-filter-options input')].map(cb => cb.value);
+}
+function updateSourceLabel() {
+  const total = document.querySelectorAll('#source-filter-options input').length;
+  const checked = document.querySelectorAll('#source-filter-options input:checked').length;
+  const lbl = document.getElementById('source-filter-label');
+  if (checked === 0)         lbl.textContent = 'None';
+  else if (checked === total) lbl.textContent = 'All';
+  else if (checked === 1)    lbl.textContent = document.querySelector('#source-filter-options input:checked').value;
+  else                       lbl.textContent = checked + ' selected';
+}
+
+function getFiltered() {
+  const from = parseDate(document.getElementById('from').value);
+  const to   = parseDate(document.getElementById('to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  const selectedSources = getSelectedSources();
+  const allSources = getAllSources();
+  const sourceFilterActive = selectedSources.size > 0 && selectedSources.size < allSources.length;
+  return LEADS.filter(l => {
+    if (from && l.createdDate < from) return false;
+    if (toInclusive && l.createdDate > toInclusive) return false;
+    if (sourceFilterActive && !selectedSources.has(l.source)) return false;
+    if (selectedSources.size === 0) return false;
+    return true;
+  });
+}
+
+function render() {
+  const filtered = getFiltered();
+  renderTiles(filtered);
+  renderDaily(filtered);
+  renderScoreDonut(filtered);
+  renderOpportunity(filtered);
+  renderLeadMql(filtered);
+}
+
+function renderTiles(filtered) {
+  const from = parseDate(document.getElementById('from').value);
+  const to   = parseDate(document.getElementById('to').value);
+  const total = filtered.length;
+  const days = (from && to) ? Math.max(1, Math.round((to - from)/86400000) + 1) : 1;
+  const avgScore = total ? filtered.reduce((s,l) => s + l.score, 0) / total : 0;
+  const high = filtered.filter(l => l.score >= 51).length;
+
+  document.getElementById('tile-total').textContent = total.toLocaleString();
+  document.getElementById('tile-total-sub').textContent = days + ' days in range';
+  document.getElementById('tile-avg').textContent = (total/days).toFixed(1);
+  document.getElementById('tile-score').textContent = avgScore.toFixed(1);
+  document.getElementById('tile-high').textContent = (total ? (high/total*100) : 0).toFixed(1) + '%';
+  document.getElementById('tile-high-sub').textContent = high.toLocaleString() + ' leads, score ≥ 51';
+}
+
+function getPeriod(from, to) {
+  if (!from || !to) return 'day';
+  const days = Math.round((to - from) / 86400000) + 1;
+  if (days <= 7)   return 'day';
+  if (days <= 28)  return 'week';
+  if (days <= 365) return 'month';
+  return 'year';
+}
+
+// Get the canonical key for a date based on the period (start-of-period key)
+function periodKey(date, period) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  if (period === 'day')   return y + '-' + m + '-' + d;
+  if (period === 'month') return y + '-' + m;
+  if (period === 'year')  return String(y);
+  // week: ISO-style Monday-start week, key = date of Monday
+  const day = date.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;  // shift so Monday is start
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + mondayOffset);
+  return fmtDate(monday);
+}
+
+// Pretty label for axis ticks based on period
+function periodLabel(key, period) {
+  if (period === 'day')   return key;
+  if (period === 'year')  return key;
+  if (period === 'month') {
+    const [y, m] = key.split('-');
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return names[Number(m) - 1] + ' ' + y;
+  }
+  // week: 'Week of <date>'
+  return 'Week of ' + key;
+}
+
+// Step a Date forward to the next period boundary (mutates and returns)
+function stepPeriod(date, period) {
+  if (period === 'day')   date.setDate(date.getDate() + 1);
+  else if (period === 'week')  date.setDate(date.getDate() + 7);
+  else if (period === 'month') date.setMonth(date.getMonth() + 1);
+  else                          date.setFullYear(date.getFullYear() + 1);
+  return date;
+}
+
+function renderDaily(filtered) {
+  const from = parseDate(document.getElementById('from').value);
+  const to   = parseDate(document.getElementById('to').value);
+  const period = getPeriod(from, to);
+
+  // Update the panel title to reflect the period grouping.
+  const titleByPeriod = {
+    day:   'Leads created per day, stacked by score range',
+    week:  'Leads created per week, stacked by score range',
+    month: 'Leads created per month, stacked by score range',
+    year:  'Leads created per year, stacked by score range',
+  };
+  const titleEl = document.getElementById('daily-title');
+  if (titleEl) titleEl.textContent = titleByPeriod[period];
+
+  // Aggregate filtered leads by period key (and bucket inside each period).
+  const byPeriod = new Map();
+  filtered.forEach(l => {
+    const key = periodKey(l.createdDate, period);
+    if (!byPeriod.has(key)) byPeriod.set(key, Object.fromEntries(BUCKETS.map(b => [b.key, 0])));
+    byPeriod.get(key)[bucketFor(l.score).key]++;
+  });
+
+  // Generate ordered labels covering the full range, even if a period is empty.
+  let keys = [];
+  if (from && to) {
+    const cursor = new Date(from);
+    // For week/month/year, snap cursor to start of its period
+    if (period === 'week') {
+      const day = cursor.getDay();
+      cursor.setDate(cursor.getDate() + (day === 0 ? -6 : 1 - day));
+    } else if (period === 'month') {
+      cursor.setDate(1);
+    } else if (period === 'year') {
+      cursor.setMonth(0); cursor.setDate(1);
+    }
+    while (cursor <= to) {
+      keys.push(periodKey(cursor, period));
+      stepPeriod(cursor, period);
+    }
+  } else {
+    keys = [...byPeriod.keys()].sort();
+  }
+
+  const labels = keys.map(k => periodLabel(k, period));
+
+  // Per-period new-lead totals, for the count drawn above each bar.
+  const periodDeltas = keys.map(k => {
+    const dc = byPeriod.get(k) || {};
+    return BUCKETS.reduce((s, b) => s + (dc[b.key] || 0), 0);
+  });
+
+  const datasets = BUCKETS.map(b => ({
+    label: b.label, backgroundColor: b.color, stack: 's', borderWidth: 0,
+    data: keys.map(k => (byPeriod.get(k) || {})[b.key] || 0),
+  }));
+
+  // Plugin to render the per-period total above each bar in black.
+  const dailyTopPlugin = {
+    id: 'dailyTop',
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+      if (!meta || !meta.data) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      chart.data.labels.forEach((_label, i) => {
+        const delta = periodDeltas[i];
+        if (!delta) return;
+        const bar = meta.data[i];
+        if (!bar) return;
+        ctx.fillText(delta.toString(), bar.x, bar.y - 4);
+      });
+      ctx.restore();
+    },
+  };
+
+  if (charts.daily) charts.daily.destroy();
+  charts.daily = new Chart(document.getElementById('dailyChart'), {
+    type: 'bar', data: { labels, datasets },
+    plugins: [ChartDataLabels, dailyTopPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 18 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const count = item.parsed.y;
+              const total = item.chart.data.datasets.reduce(
+                (s, ds) => s + (ds.data[item.dataIndex] || 0), 0
+              );
+              const pct = total ? (count / total * 100).toFixed(1) : '0.0';
+              return item.dataset.label + ': ' + count.toLocaleString() + ' (' + pct + '% of ' + total.toLocaleString() + ')';
+            },
+          },
+        },
+        datalabels: {
+          display: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex];
+            if (!v) return false;
+            // Compute the segment's pixel height from the Y scale, not from the
+            // bar element's animated position. The bar's .base/.y values are
+            // interpolated from 0 during the load animation, which used to make
+            // every segment look 0px tall on first render and hide all labels
+            // until a mouse hover triggered a redraw. The Y scale gives us the
+            // final pixel height immediately.
+            const scale = ctx.chart.scales.y;
+            if (scale) {
+              const px = Math.abs(scale.getPixelForValue(v) - scale.getPixelForValue(0));
+              if (px < 16) return false;  // not enough vertical room for an 11px label
+            }
+            return true;
+          },
+          color: '#0f172a',
+          font: { weight: 'bold', size: 10 },
+          anchor: 'center', align: 'center',
+          formatter: (v) => v,
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const key = keys[els[0].index];
+        const periodContacts = filtered.filter(l => periodKey(l.createdDate, period) === key);
+        const titlePrefix = period === 'day' ? 'Leads created on '
+                          : period === 'week' ? 'Leads created the week of '
+                          : period === 'month' ? 'Leads created in '
+                          : 'Leads created in ';
+        showContacts(titlePrefix + periodLabel(key, period), periodContacts);
+      },
+      scales: {
+        x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+function renderScoreDonut(filtered) {
+  const total = filtered.length;
+  const counts = BUCKETS.map(b => filtered.filter(l => l.score >= b.min && l.score <= b.max).length);
+
+  if (charts.score) charts.score.destroy();
+  charts.score = new Chart(document.getElementById('scoreChart'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: { labels: BUCKETS.map(b => b.label),
+            datasets: [{ data: counts, backgroundColor: BUCKETS.map(b => b.color), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+          color: '#0f172a',
+          font: { weight: 'bold', size: 11 },
+          formatter: (v) => v,
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const b = BUCKETS[els[0].index];
+        const ctx = filtered.filter(l => l.score >= b.min && l.score <= b.max);
+        showContacts(b.label + ' — score bucket', ctx);
+      },
+    },
+  });
+
+  document.getElementById('bucket-table').innerHTML = BUCKETS.map((b,i) => {
+    const c = counts[i];
+    const pct = total ? (c/total*100).toFixed(1) : '0.0';
+    return '<tr class="clickable" data-bucket="' + b.key + '">' +
+           '<td><span class="pill ' + b.key + '">' + b.label + '</span></td>' +
+           '<td>' + c.toLocaleString() + '</td><td>' + pct + '%</td></tr>';
+  }).join('');
+  document.querySelectorAll('#bucket-table tr.clickable').forEach(row => {
+    row.addEventListener('click', () => {
+      const key = row.dataset.bucket;
+      const b = BUCKETS.find(x => x.key === key);
+      const ctx = filtered.filter(l => l.score >= b.min && l.score <= b.max);
+      showContacts(b.label + ' — score bucket', ctx);
+    });
+  });
+}
+
+function renderOpportunity(filtered) {
+  const labels = BUCKETS.map(b => b.label);
+  const oppCounts = BUCKETS.map(b => filtered.filter(l =>
+    l.score >= b.min && l.score <= b.max && l.everOpenDeal === true
+  ).length);
+  const otherCounts = BUCKETS.map(b => filtered.filter(l =>
+    l.score >= b.min && l.score <= b.max && l.everOpenDeal !== true
+  ).length);
+  const totals = BUCKETS.map((_, i) => oppCounts[i] + otherCounts[i]);
+
+  // Convert raw counts into percentages of the bucket's total, so the bars
+  // stack to exactly 100%. Buckets with 0 contacts stay flat at 0.
+  const oppPct   = oppCounts.map((c, i)   => totals[i] ? (c / totals[i]) * 100 : 0);
+  const otherPct = otherCounts.map((c, i) => totals[i] ? (c / totals[i]) * 100 : 0);
+
+  if (charts.opp) charts.opp.destroy();
+  charts.opp = new Chart(document.getElementById('oppChart'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels,
+      datasets: [
+        // Stacked at 100% — green Open Deal on top of grey No deal
+        { label: 'Open Deal',    backgroundColor: '#16a34a', data: oppPct,
+          stack: 's', _counts: oppCounts,   _totals: totals },
+        { label: 'No open deal', backgroundColor: '#64748b', data: otherPct,
+          stack: 's', _counts: otherCounts, _totals: totals },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } },
+          // Custom click: toggle visibility AND re-scale Y axis so the
+          // remaining dataset is readable. When you hide "No open deal",
+          // the green bars at 0.15% are invisible against a 100% scale —
+          // so we drop the 100% cap and let Chart.js auto-fit.
+          onClick: (e, legendItem, legend) => {
+            const ci = legend.chart;
+            const idx = legendItem.datasetIndex;
+            const meta = ci.getDatasetMeta(idx);
+            meta.hidden = meta.hidden === null ? !ci.data.datasets[idx].hidden : null;
+            const visibleCount = ci.data.datasets.filter((_, i) =>
+              !ci.getDatasetMeta(i).hidden
+            ).length;
+            if (visibleCount < 2) {
+              ci.options.scales.y.max = undefined;
+              ci.options.scales.y.grace = '15%';
+            } else {
+              ci.options.scales.y.max = 100;
+              ci.options.scales.y.grace = 0;
+            }
+            ci.update();
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const count = item.dataset._counts[item.dataIndex];
+              const total = item.dataset._totals[item.dataIndex];
+              const pct = item.parsed.y;
+              return item.dataset.label + ': ' + count + ' (' + pct.toFixed(1) + '% of ' + total + ')';
+            },
+          },
+        },
+        datalabels: {
+          // Show percentage in white inside each segment, but only if it's
+          // a meaningful chunk (≥ ~4 percentage points) to avoid clutter.
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 4,
+          color: 'white',
+          font: { weight: 'bold', size: 11 },
+          anchor: 'center', align: 'center',
+          formatter: (value) => value.toFixed(2) + '%',
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const el = els[0];
+        const b = BUCKETS[el.index];
+        const isOpp = el.datasetIndex === 0;
+        const fullBucket = filtered.filter(l => l.score >= b.min && l.score <= b.max);
+        const displayed = fullBucket.filter(l => isOpp ? l.everOpenDeal === true : l.everOpenDeal !== true);
+        const subtitle = isOpp ? ' — with Open Deal' : ' — no Open Deal';
+        // 3rd arg = full bucket for the Export CSV button, so the user can
+        // analyse Open Deal vs No deal together in Excel via the `wasOpenDeal` column.
+        showContacts(b.label + subtitle, displayed, fullBucket);
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: true },
+        y: { beginAtZero: true, max: 100, stacked: true,
+             ticks: { callback: (v) => v + '%' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+function renderLeadMql(filtered) {
+  // Lead vs MQL — Open Deal conversion rate.
+  //
+  // Per Diego's spec: define Lead vs MQL by the Auto-Score (Company & Persona
+  // Profile), NOT by the lifecyclestage. The auto-sync workflow that pushes
+  // lifecyclestage to Opportunity at deal creation made the lifecycle-based
+  // logic unreliable. The score is the source of truth.
+  //
+  //   Non-MQL Lead = score < 50
+  //   MQL          = score >= 50
+  //
+  // Numerator   = contacts in the group who have ever been Open Deal
+  //               (everOpenDeal === true — historical, from backfilled data)
+  // Denominator = all contacts in the group within the selected date range
+  //               (already applied by `filtered`)
+  const groups = [
+    { key: 'lead', label: 'Non-MQL Lead (score < 50)',
+      contacts: filtered.filter(l => l.score < 50) },
+    { key: 'mql',  label: 'MQL (score ≥ 50)',
+      contacts: filtered.filter(l => l.score >= 50) },
+  ];
+
+  const totals = groups.map(g => g.contacts.length);
+  const oppCounts   = groups.map(g => g.contacts.filter(l => l.everOpenDeal === true).length);
+  const otherCounts = groups.map((g, i) => totals[i] - oppCounts[i]);
+
+  // Convert to percentages so the bars stack to 100%.
+  const oppPct   = oppCounts.map((c, i)   => totals[i] ? (c / totals[i]) * 100 : 0);
+  const otherPct = otherCounts.map((c, i) => totals[i] ? (c / totals[i]) * 100 : 0);
+
+  if (charts.leadMql) charts.leadMql.destroy();
+  charts.leadMql = new Chart(document.getElementById('leadMqlChart'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: groups.map(g => g.label + ' (' + totals[groups.indexOf(g)].toLocaleString() + ')'),
+      datasets: [
+        { label: 'Open Deal',    backgroundColor: '#16a34a', data: oppPct,
+          stack: 's', _counts: oppCounts,   _totals: totals },
+        { label: 'No open deal', backgroundColor: '#64748b', data: otherPct,
+          stack: 's', _counts: otherCounts, _totals: totals },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } },
+          // Custom click: toggle visibility AND re-scale Y axis so the
+          // remaining dataset is readable. When you hide "No open deal",
+          // the green bars at 0.15% are invisible against a 100% scale —
+          // so we drop the 100% cap and let Chart.js auto-fit.
+          onClick: (e, legendItem, legend) => {
+            const ci = legend.chart;
+            const idx = legendItem.datasetIndex;
+            const meta = ci.getDatasetMeta(idx);
+            meta.hidden = meta.hidden === null ? !ci.data.datasets[idx].hidden : null;
+            const visibleCount = ci.data.datasets.filter((_, i) =>
+              !ci.getDatasetMeta(i).hidden
+            ).length;
+            if (visibleCount < 2) {
+              ci.options.scales.y.max = undefined;
+              ci.options.scales.y.grace = '15%';
+            } else {
+              ci.options.scales.y.max = 100;
+              ci.options.scales.y.grace = 0;
+            }
+            ci.update();
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const count = item.dataset._counts[item.dataIndex];
+              const total = item.dataset._totals[item.dataIndex];
+              const pct = item.parsed.y;
+              return item.dataset.label + ': ' + count + ' (' + pct.toFixed(1) + '% of ' + total + ')';
+            },
+          },
+        },
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 4,
+          color: 'white',
+          font: { weight: 'bold', size: 12 },
+          anchor: 'center', align: 'center',
+          formatter: (value) => value.toFixed(2) + '%',
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const el = els[0];
+        const group = groups[el.index];
+        const isOpp = el.datasetIndex === 0;
+        const displayed = group.contacts.filter(l =>
+          isOpp ? l.everOpenDeal === true : l.everOpenDeal !== true
+        );
+        const subtitle = isOpp ? ' — with Open Deal' : ' — no Open Deal';
+        // Export covers the full group (both Open Deal and No deal) so the
+        // user can compare in Excel via the `wasOpenDeal` column.
+        showContacts(group.label + subtitle, displayed, group.contacts);
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: true },
+        y: { beginAtZero: true, max: 100, stacked: true,
+             ticks: { callback: (v) => v + '%' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+
+// --- CSV export ---
+function csvEscape(v) {
+  if (v == null) return '';
+  const s = String(v);
+  // Quote if contains comma, quote, newline, or leading/trailing whitespace
+  if (/[",\n\r]/.test(s) || /^\s|\s$/.test(s)) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function leadsToCSV(leads) {
+  const headers = [
+    'id', 'firstname', 'lastname', 'email',
+    'created', 'score', 'scoreRange', 'scoreEngagement', 'scoreLead',
+    'source', 'lifecyclestage', 'status', 'wasOpenDeal',
+    'everLead', 'everMql', 'everSql', 'everOpportunity', 'everCustomer',
+    'firstOpenDealAt', 'lifecycleAtConversion',
+    'hs_seniority', 'job_department', 'type_d_acteur', 'type_dacteur__other', 'hs_email_optout',
+    'hubspotUrl',
+  ];
+  const rows = leads.map(l => {
+    const hubspotUrl = (PORTAL_ID && l.id)
+      ? 'https://app.hubspot.com/contacts/' + PORTAL_ID + '/record/0-1/' + l.id
+      : '';
+    const cr = l.criteria || {};
+    return [
+      l.id || '',
+      l.firstname || '',
+      l.lastname || '',
+      l.email || '',
+      l.created || '',
+      l.score != null ? l.score : '',
+      bucketFor(l.score).label,
+      l.scoreEngagement != null ? l.scoreEngagement : '',
+      l.scoreLead != null ? l.scoreLead : '',
+      l.source || '',
+      l.lifecyclestage || '',
+      l.status || '',
+      l.everOpenDeal ? 'true' : 'false',
+      l.everLead ? 'true' : 'false',
+      l.everMql ? 'true' : 'false',
+      l.everSql ? 'true' : 'false',
+      l.everOpportunity ? 'true' : 'false',
+      l.everCustomer ? 'true' : 'false',
+      l.firstOpenDealAt || '',
+      l.lifecycleAtConversion || '',
+      cr.hs_seniority || '',
+      cr.job_department || '',
+      cr.type_d_acteur || '',
+      cr.type_dacteur__other || '',
+      cr.hs_email_optout || '',
+      hubspotUrl,
+    ].map(csvEscape).join(',');
+  });
+  // BOM so Excel opens UTF-8 correctly (accents in names, etc.)
+  return '\ufeff' + headers.join(',') + '\n' + rows.join('\n');
+}
+
+function downloadCSV(filename, csvText) {
+  const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const filtered = getFiltered();
+  const stamp = fmtDate(new Date());
+  downloadCSV('hubspot-leads-' + stamp + '.csv', leadsToCSV(filtered));
+});
+
+// Track what the modal displays vs what its Export CSV button should download.
+// By default they're the same — but charts can call showContacts() with a
+// third arg to make the Export button download a wider cohort while showing
+// only a subset in the table.
+let modalContacts = [];
+let modalExportContacts = [];
+document.getElementById('modal-export').addEventListener('click', () => {
+  const stamp = fmtDate(new Date());
+  const title = (document.getElementById('modal-title').textContent || 'contacts')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+  downloadCSV('hubspot-leads-' + (title || 'segment') + '-' + stamp + '.csv', leadsToCSV(modalExportContacts));
+});
+
+// --- Modal ---
+// Track whether the current modal was opened from the simulator tab.
+// When true, the modal shows the "Score (simulated)" column. When false
+// (i.e. opened from the dashboard tab), only the official score is shown.
+let modalFromSimulator = false;
+
+function showContacts(title, contacts, exportContacts) {
+  modalContacts = contacts || [];
+  // If the chart passes a wider cohort for export, use it; otherwise use the
+  // displayed contacts as the export set.
+  modalExportContacts = exportContacts || modalContacts;
+  document.getElementById('modal-title').textContent = title;
+  // Make the count line show both the displayed count and (if larger) the export count.
+  const dispCount = contacts.length;
+  const expCount = modalExportContacts.length;
+  let countText = ' — ' + dispCount + ' contact' + (dispCount === 1 ? '' : 's');
+  if (expCount > dispCount) {
+    countText += ' (Export covers all ' + expCount + ')';
+  }
+  document.getElementById('modal-count').textContent = countText;
+  // Update Export button tooltip to clarify.
+  const expBtn = document.getElementById('modal-export');
+  if (expBtn) {
+    expBtn.title = (expCount > dispCount)
+      ? 'Export all ' + expCount + ' contacts in this group (Open Deal + No deal) as CSV'
+      : 'Export the ' + expCount + ' contact' + (expCount === 1 ? '' : 's') + ' shown as CSV';
+  }
+  const body = document.getElementById('modal-body');
+  if (!contacts.length) {
+    body.innerHTML = '<div class="empty-mini">No contacts in this segment.</div>';
+  } else {
+    const sorted = [...contacts].sort((a,b) => b.score - a.score);
+    const anySticky = sorted.some(l => l.everOpenDeal && l.status !== 'OPEN_DEAL');
+    // Show "Score (simulated)" column only when the modal was opened from
+    // the Scoring simulator tab. The dashboard tab never shows it.
+    const showSimScore = modalFromSimulator;
+    body.innerHTML = '<div style="overflow-x:auto"><table>' +
+      '<thead><tr>' +
+        '<th>ID</th>' +
+        '<th>Name</th>' +
+        '<th>Email</th>' +
+        '<th>Created</th>' +
+        '<th title="Auto-score : Company &amp; Person profile (primary score, drives the bucketing)">Score</th>' +
+        (showSimScore ? '<th title="Score recomputed with your custom simulator grid" style="background:#fef9c3">Score (simulated)</th>' : '') +
+        '<th title="Score bucket">Range</th>' +
+        '<th title="Auto-score : Engagement &amp; Maturity">Engagement</th>' +
+        '<th title="Auto-score">Lead</th>' +
+        '<th title="hs_seniority">Seniority</th>' +
+        '<th title="job_department">Department</th>' +
+        '<th title="type_d_acteur — primary company">Type d\'acteur</th>' +
+        '<th title="type_dacteur__other — only filled when Type d\'acteur = Other">Type d\'acteur (Other)</th>' +
+        '<th title="hs_email_optout">Email opt-out</th>' +
+        '<th>Source</th>' +
+        '<th>Lifecycle</th>' +
+        '<th title="The lifecycle stage when this contact first reached OPEN_DEAL">@ Open Deal</th>' +
+        '<th title="True if the contact has ever been Open Deal at any point in time">Was Open Deal</th>' +
+        '<th>Status</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+      sorted.map(l => {
+        const name = (l.firstname + ' ' + l.lastname).trim() || '—';
+        const b = bucketFor(l.score);
+        const stickyOnly = l.everOpenDeal && l.status !== 'OPEN_DEAL';
+        const statusCell = stickyOnly
+          ? '<span title="Was Open Deal previously (sticky)">★ ' + (esc(l.status) || '—') + '</span>'
+          : (esc(l.status) || '—');
+        const nameCell = (PORTAL_ID && l.id)
+          ? '<a href="https://app.hubspot.com/contacts/' + PORTAL_ID + '/record/0-1/' + esc(l.id)
+            + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:500">'
+            + esc(name) + ' ↗</a>'
+          : esc(name);
+        const engagement = (l.scoreEngagement != null ? l.scoreEngagement : 0).toFixed(0);
+        const leadScore  = (l.scoreLead != null ? l.scoreLead : 0).toFixed(0);
+        // Scoring criteria — fall back gracefully if a contact has no criteria (e.g. older sticky)
+        const cr = l.criteria || {};
+        // Two distinct columns for clarity. type_dacteur__other is only set
+        // when type_d_acteur === 'Other' so we just display it as-is.
+        const acteurValue = cr.type_d_acteur || '—';
+        const acteurOther = cr.type_dacteur__other || '—';
+        // Simulated score recomputed with the live grid (only shown when grid is custom)
+        const simScore = showSimScore ? computeScore(cr, SCORING_GRID) : null;
+        const simBucket = showSimScore ? bucketFor(simScore) : null;
+        const simCell = showSimScore
+          ? '<td style="background:#fef9c3"><span class="pill ' + simBucket.key + '">' + simScore.toFixed(0) + '</span></td>'
+          : '';
+        return '<tr>' +
+          '<td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)">' + esc(l.id || '—') + '</td>' +
+          '<td>' + nameCell + '</td>' +
+          '<td>' + (esc(l.email) || '—') + '</td>' +
+          '<td>' + fmtDate(l.createdDate) + '</td>' +
+          '<td><span class="pill ' + b.key + '">' + l.score.toFixed(0) + '</span></td>' +
+          simCell +
+          '<td><span class="pill ' + b.key + '">' + b.label + '</span></td>' +
+          '<td>' + engagement + '</td>' +
+          '<td>' + leadScore + '</td>' +
+          '<td style="font-size:12px">' + (esc(cr.hs_seniority) || '—') + '</td>' +
+          '<td style="font-size:12px">' + (esc(cr.job_department) || '—') + '</td>' +
+          '<td style="font-size:12px">' + esc(acteurValue) + '</td>' +
+          '<td style="font-size:12px">' + esc(acteurOther) + '</td>' +
+          '<td style="font-size:12px">' + (cr.hs_email_optout === 'true' ? '<span style="color:#dc2626">true</span>' : 'false') + '</td>' +
+          '<td>' + (esc(l.source) || '—') + '</td>' +
+          '<td>' + esc(lifecycleLabel(l.lifecyclestage)) + '</td>' +
+          '<td>' + (l.lifecycleAtConversion ? esc(lifecycleLabel(l.lifecycleAtConversion)) : '—') + '</td>' +
+          '<td style="font-weight:500">' + (l.everOpenDeal ? '<span style="color:#16a34a">true</span>' : '<span style="color:#94a3b8">false</span>') + '</td>' +
+          '<td>' + statusCell + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>' +
+      (anySticky ? '<p style="font-size:12px;color:var(--muted);margin-top:12px">★ = previously reached Open Deal; current status has changed since (sticky).</p>' : '');
+  }
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// --- Filters ---
+function setPreset(range) {
+  const to = new Date();
+  const from = range === 'all'
+    ? (LEADS.length ? new Date(Math.min(...LEADS.map(l => l.createdDate))) : to)
+    : new Date(Date.now() - (Number(range) - 1) * 86400000);
+  document.getElementById('from').value = fmtDate(from);
+  document.getElementById('to').value = fmtDate(to);
+  render();
+}
+document.querySelectorAll('#presets button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    setPreset(btn.dataset.range);
+  });
+});
+['from','to'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+  document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
+  render();
+}));
+// Source multi-select panel: open/close
+document.getElementById('source-filter-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const panel = document.getElementById('source-filter-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('source-filter-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('source-filter-panel').style.display = 'none';
+  }
+});
+document.getElementById('source-filter-all').addEventListener('click', () => {
+  document.querySelectorAll('#source-filter-options input').forEach(cb => cb.checked = true);
+  updateSourceLabel(); render();
+});
+document.getElementById('source-filter-none').addEventListener('click', () => {
+  document.querySelectorAll('#source-filter-options input').forEach(cb => cb.checked = false);
+  updateSourceLabel(); render();
+});
+
+// ============================================================
+// SCORING SIMULATOR
+// ============================================================
+// The default grid mirrors Didask's current HubSpot Auto-Score grid.
+// Users can tweak any value in the UI and see the impact live across
+// all four charts and the summary tiles.
+
+const DEFAULT_SCORING_GRID = {
+  seniority: {
+    "Director/VP": 35,
+    "Executive": 20,
+    "Manager": 30,
+    "Senior IC / Lead": 15,
+    "Freelance": -100,
+    "Employee": 0,
+    "Intern/Apprentice": 0,
+    "External/Consultant": 0,
+    "Value not found": 0,
+    "Contact not found": 0,
+  },
+  department: {
+    "IT/InformationSystems": 35,
+    "Training/Learning&Development": 35,
+    "HR/People": 35,
+    "Finance/Accounting": 25,
+    "Sales": 25,
+    "General Management/Executive": 25,
+    "Operations": 25,
+    "Marketing/Communication": 0,
+    "Compliance/Legal": 0,
+    "Innovation/DigitalTransformation": 0,
+    "Data": 0,
+    "Design": 0,
+    "Product": 0,
+    "Engineering": 0,
+    "Customer Success": 0,
+    "Value not found": 0,
+    "Contact not found": 0,
+  },
+  acteur: {
+    "Entreprise - 50 à 2k ETP": 10,
+    "Entreprise > 2000 salarié·e·s": 10,
+    "Other": 0,  // delegates to acteur_other below
+  },
+  acteur_other: {
+    "Training org": -15,
+    "Training org - Premium": 10,
+    "Public Sector": -15,
+    "Premium Association": 5,
+    "Association": -15,
+    "Indep. or Small business < 50 ETP": -15,
+  },
+  contact: {
+    "unsubscribed_from_all_email": -100,  // applied when hs_email_optout === 'true'
+  },
+};
+
+// Working copy — what the UI uses and the user mutates. Starts equal to
+// default, but if the current browser has a previously-saved custom grid in
+// localStorage we restore it so each teammate keeps their own tweaks across
+// reloads and deploys.
+const SCORING_GRID_STORAGE_KEY = 'hubspot-dashboard-scoring-grid-v1';
+let SCORING_GRID = JSON.parse(JSON.stringify(DEFAULT_SCORING_GRID));
+
+function saveScoringGridToStorage() {
+  try {
+    localStorage.setItem(SCORING_GRID_STORAGE_KEY, JSON.stringify(SCORING_GRID));
+  } catch (e) {
+    console.warn('Could not save scoring grid to localStorage:', e);
+  }
+}
+
+function loadScoringGridFromStorage() {
+  try {
+    const raw = localStorage.getItem(SCORING_GRID_STORAGE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    // Deep-merge: if the default grid gets new families/keys in the future,
+    // we want them to appear even for users with an older saved copy.
+    for (const family in DEFAULT_SCORING_GRID) {
+      if (!SCORING_GRID[family]) SCORING_GRID[family] = {};
+      for (const key in DEFAULT_SCORING_GRID[family]) {
+        if (saved[family] && saved[family][key] !== undefined) {
+          SCORING_GRID[family][key] = saved[family][key];
+        } else {
+          SCORING_GRID[family][key] = DEFAULT_SCORING_GRID[family][key];
+        }
+      }
+    }
+    return true;
+  } catch (e) {
+    console.warn('Could not load scoring grid from localStorage:', e);
+    return false;
+  }
+}
+
+// Compute a contact's simulated score using the current grid.
+function computeScore(criteria, grid) {
+  if (!criteria) return 0;
+  let s = 0;
+  s += grid.seniority[criteria.hs_seniority] || 0;
+  s += grid.department[criteria.job_department] || 0;
+  // Type d'acteur: if "Other", delegate to type_dacteur__other; else use main.
+  if (criteria.type_d_acteur === "Other") {
+    s += grid.acteur_other[criteria.type_dacteur__other] || 0;
+  } else {
+    s += grid.acteur[criteria.type_d_acteur] || 0;
+  }
+  // Contact flags
+  if (criteria.hs_email_optout === "true") {
+    s += grid.contact.unsubscribed_from_all_email || 0;
+  }
+  return s;
+}
+
+// Build the UI for the simulator (one section per criterion family).
+function renderSimulatorUI() {
+  const sectionConfigs = [
+    { id: 'sim-seniority',    family: 'seniority' },
+    { id: 'sim-department',   family: 'department' },
+    { id: 'sim-acteur',       family: 'acteur' },
+    { id: 'sim-acteur-other', family: 'acteur_other' },
+    { id: 'sim-contact',      family: 'contact' },
+  ];
+
+  function makeRow(label, value, family) {
+    const row = document.createElement('div');
+    row.className = 'scoring-row';
+    const lbl = document.createElement('span');
+    lbl.className = 'label';
+    lbl.textContent = label;
+    const input = document.createElement('input');
+    input.type = 'number'; input.value = value;
+    input.dataset.family = family;
+    input.dataset.key = label;
+    input.addEventListener('input', onScoreInput);
+    row.appendChild(lbl);
+    row.appendChild(input);
+    return row;
+  }
+
+  sectionConfigs.forEach(cfg => {
+    const sec = document.getElementById(cfg.id);
+    // Remove EVERY previously-rendered child (rows + any old subtitles)
+    // while keeping the <summary> intact.
+    Array.from(sec.children).forEach(child => {
+      if (child.tagName.toLowerCase() !== 'summary') child.remove();
+    });
+    // Main entries for the primary family
+    Object.entries(SCORING_GRID[cfg.family]).forEach(([label, value]) => {
+      sec.appendChild(makeRow(label, value, cfg.family));
+    });
+  });
+}
+
+function onScoreInput(e) {
+  const fam = e.target.dataset.family;
+  const key = e.target.dataset.key;
+  const v = Number(e.target.value);
+  if (!isNaN(v)) {
+    SCORING_GRID[fam][key] = v;
+    // Live-update charts immediately so the user sees the impact of every
+    // keystroke — but only PERSIST when they click "Save changes".
+    updateSaveButtonState();
+    renderSimulator();
+  }
+}
+
+// Compares the in-memory grid with what's stored in localStorage. If they
+// differ, we have unsaved changes → show the Save button and update the
+// status label. Also compares to the default grid to know if user is on
+// the official values.
+function updateSaveButtonState() {
+  const btn = document.getElementById('save-grid-btn');
+  const info = document.getElementById('sim-info');
+  if (!btn || !info) return;
+  const saved = localStorage.getItem(SCORING_GRID_STORAGE_KEY);
+  const current = JSON.stringify(SCORING_GRID);
+  const defaultGrid = JSON.stringify(DEFAULT_SCORING_GRID);
+
+  let dirty = false;
+  if (saved === null) {
+    dirty = (current !== defaultGrid);
+  } else {
+    dirty = (current !== saved);
+  }
+
+  if (dirty) {
+    btn.style.display = '';
+    info.textContent = 'Unsaved changes (click Save to persist)';
+    info.style.color = '#d97706';
+  } else {
+    btn.style.display = 'none';
+    info.style.color = '';
+    if (saved !== null && saved !== defaultGrid) {
+      info.textContent = 'Custom grid (saved locally in your browser)';
+    } else {
+      info.textContent = 'Using current HubSpot grid';
+    }
+  }
+}
+
+// Called when the user clicks the Save button. Persists the current grid.
+function saveScoringGridExplicit() {
+  try {
+    localStorage.setItem(SCORING_GRID_STORAGE_KEY, JSON.stringify(SCORING_GRID));
+    const btn = document.getElementById('save-grid-btn');
+    const oldText = btn.textContent;
+    btn.textContent = '✓ Saved';
+    setTimeout(() => { btn.textContent = oldText; updateSaveButtonState(); }, 1200);
+  } catch (e) {
+    alert('Could not save: ' + e.message);
+  }
+}
+
+// Kept for compatibility but no longer wired to a button.
+function applyScoringGrid() {
+  renderSimulator();
+}
+
+function resetScoringGrid() {
+  if (!confirm("Reset all scores to the current HubSpot grid? This will discard your unsaved changes and your saved custom grid.")) return;
+  SCORING_GRID = JSON.parse(JSON.stringify(DEFAULT_SCORING_GRID));
+  try { localStorage.removeItem(SCORING_GRID_STORAGE_KEY); } catch (e) {}
+  renderSimulatorUI();
+  updateSaveButtonState();
+  renderSimulator();
+}
+
+// Switch top-level tabs
+function switchTab(name) {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'simulator') {
+    // (Re)render on first open so charts size correctly
+    renderSimulator();
+  }
+}
+
+// --- Simulator render (parallel to render() for the dashboard tab) ---
+let simCharts = {};
+
+// Helper: open the modal from the simulator tab. Sets the flag that turns
+// on the "Score (simulated)" column, then delegates to showContacts.
+function showSimContacts(title, contacts, exportContacts) {
+  modalFromSimulator = true;
+  showContacts(title, contacts, exportContacts);
+}
+
+// Returns 'notfound' if the value equals a HubSpot 'not found' token,
+// 'empty' if it's null/undefined/empty string, or null if the value is
+// present and valid. Two separate categories so the UI can offer independent
+// toggles.
+function classifyCriterion(v) {
+  if (v == null) return 'empty';
+  const s = String(v).trim();
+  if (s === '') return 'empty';
+  const normalized = s.toLowerCase().replace(/[\s-]/g, '_');
+  if (normalized === 'value_not_found' || normalized === 'contact_not_found') {
+    return 'notfound';
+  }
+  return null;
+}
+
+// Kept for backward compat if anything else calls it.
+function isCriterionMissing(v) {
+  return classifyCriterion(v) !== null;
+}
+
+// Returns 'notfound' | 'empty' | null for the contact as a whole.
+//
+// Rules :
+//   - 'notfound' : if EITHER seniority OR department is a HubSpot 'not found'
+//                   token. One flagged field is enough — those are explicit
+//                   HubSpot errors.
+//   - 'empty'    : ONLY if BOTH seniority AND department are empty/null.
+//                   A contact with just one empty field is still usable
+//                   (partial data).
+//   - null       : otherwise (contact has usable data).
+//
+// 'notfound' wins over 'empty' if both apply, so each excluded contact is
+// counted in exactly one bucket.
+function classifyContact(l) {
+  const cr = l.criteria || {};
+  const seniorityCat  = classifyCriterion(cr.hs_seniority);
+  const departmentCat = classifyCriterion(cr.job_department);
+  // "not found" wins as soon as ONE field triggers it
+  if (seniorityCat === 'notfound' || departmentCat === 'notfound') return 'notfound';
+  // "empty" requires BOTH fields to be empty/null
+  if (seniorityCat === 'empty' && departmentCat === 'empty')       return 'empty';
+  return null;
+}
+
+// Populated by getSimFiltered() on every render so the modal can show the
+// exact same set the user sees excluded in the counter. We keep two lists
+// so each toggle's counter opens its own scoped modal.
+let simExcludedContacts_notfound = [];
+let simExcludedContacts_empty = [];
+
+function getSimFiltered() {
+  const from = parseDate(document.getElementById('sim-from').value);
+  const to   = parseDate(document.getElementById('sim-to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  const excludeNotFound = document.getElementById('exclude-notfound-toggle')?.checked;
+  const excludeEmpty    = document.getElementById('exclude-empty-toggle')?.checked;
+  // Note: simulator ignores the Source filter on purpose to keep the UI simple.
+  // We keep `score` (official HubSpot value) intact and add `simScore` — the
+  // value recomputed with the current grid. All simulator charts read from
+  // `simScore` so the dashboard's official score is never overwritten.
+  simExcludedContacts_notfound = [];
+  simExcludedContacts_empty = [];
+  const rows = LEADS.filter(l => {
+    if (from && l.createdDate < from) return false;
+    if (toInclusive && l.createdDate > toInclusive) return false;
+    const category = classifyContact(l);
+    if (excludeNotFound && category === 'notfound') {
+      simExcludedContacts_notfound.push(l);
+      return false;
+    }
+    if (excludeEmpty && category === 'empty') {
+      simExcludedContacts_empty.push(l);
+      return false;
+    }
+    return true;
+  }).map(l => ({ ...l, simScore: computeScore(l.criteria, SCORING_GRID) }));
+
+  // Update each counter next to its toggle.
+  function setCounter(id, active, contacts) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const n = contacts.length;
+    el.textContent = active && n > 0
+      ? '(' + n.toLocaleString() + ' contact' + (n === 1 ? '' : 's') + ' excluded)'
+      : '';
+    el.style.pointerEvents = (active && n > 0) ? '' : 'none';
+  }
+  setCounter('excluded-count-notfound', excludeNotFound, simExcludedContacts_notfound);
+  setCounter('excluded-count-empty',    excludeEmpty,    simExcludedContacts_empty);
+  return rows;
+}
+
+// Click handler for either "(X contacts excluded)" link — opens the standard
+// contacts modal filled with the exact contacts that were dropped for that
+// specific reason.
+function showExcludedContactsModal(kind) {
+  const list = kind === 'empty' ? simExcludedContacts_empty : simExcludedContacts_notfound;
+  if (!list.length) return;
+  modalFromSimulator = true;
+  const withSim = list.map(l => ({
+    ...l,
+    simScore: computeScore(l.criteria, SCORING_GRID),
+  }));
+  const title = kind === 'empty'
+    ? "Excluded contacts — both Seniority AND Department empty"
+    : "Excluded contacts — 'Value not found' / 'Contact not found'";
+  showContacts(title, withSim, withSim);
+}
+
+function onExcludeMissingToggle() {
+  // Persist both toggles so they survive reloads
+  try {
+    const notFoundEl = document.getElementById('exclude-notfound-toggle');
+    const emptyEl    = document.getElementById('exclude-empty-toggle');
+    if (notFoundEl) {
+      localStorage.setItem('hubspot-dashboard-exclude-notfound-v1',
+        notFoundEl.checked ? '1' : '0');
+    }
+    if (emptyEl) {
+      localStorage.setItem('hubspot-dashboard-exclude-empty-v1',
+        emptyEl.checked ? '1' : '0');
+    }
+  } catch (e) {}
+  renderSimulator();
+}
+
+function renderSimulator() {
+  const sf = getSimFiltered();
+  renderSimTiles(sf);
+  renderSimDaily(sf);
+  renderSimScoreDonut(sf);
+  renderSimOpportunity(sf);
+  renderSimLeadMql(sf);
+}
+
+function renderSimTiles(filtered) {
+  const from = parseDate(document.getElementById('sim-from').value);
+  const to   = parseDate(document.getElementById('sim-to').value);
+  const total = filtered.length;
+  const days = (from && to) ? Math.max(1, Math.round((to - from)/86400000) + 1) : 1;
+  const avgScore = total ? filtered.reduce((s,l) => s + l.simScore, 0) / total : 0;
+  const high = filtered.filter(l => l.simScore >= 51).length;
+
+  document.getElementById('sim-tile-total').textContent = total.toLocaleString();
+  document.getElementById('sim-tile-total-sub').textContent = days + ' days in range';
+  document.getElementById('sim-tile-avg').textContent = (total/days).toFixed(1);
+  document.getElementById('sim-tile-score').textContent = avgScore.toFixed(1);
+  document.getElementById('sim-tile-high').textContent = (total ? (high/total*100) : 0).toFixed(1) + '%';
+  document.getElementById('sim-tile-high-sub').textContent = high.toLocaleString() + ' leads, score ≥ 51';
+}
+
+function renderSimDaily(filtered) {
+  // Mirrors renderDaily but on the simulator canvas.
+  const from = parseDate(document.getElementById('sim-from').value);
+  const to   = parseDate(document.getElementById('sim-to').value);
+  const period = getPeriod(from, to);
+
+  const titleByPeriod = {
+    day:   'Leads created per day, stacked by score range (simulated)',
+    week:  'Leads created per week, stacked by score range (simulated)',
+    month: 'Leads created per month, stacked by score range (simulated)',
+    year:  'Leads created per year, stacked by score range (simulated)',
+  };
+  const titleEl = document.getElementById('sim-daily-title');
+  if (titleEl) titleEl.textContent = titleByPeriod[period];
+
+  const byPeriod = new Map();
+  filtered.forEach(l => {
+    const key = periodKey(l.createdDate, period);
+    if (!byPeriod.has(key)) byPeriod.set(key, Object.fromEntries(BUCKETS.map(b => [b.key, 0])));
+    byPeriod.get(key)[bucketFor(l.simScore).key]++;
+  });
+
+  let keys = [];
+  if (from && to) {
+    const cursor = new Date(from);
+    if (period === 'week') {
+      const day = cursor.getDay();
+      cursor.setDate(cursor.getDate() + (day === 0 ? -6 : 1 - day));
+    } else if (period === 'month') { cursor.setDate(1); }
+    else if (period === 'year') { cursor.setMonth(0); cursor.setDate(1); }
+    while (cursor <= to) {
+      keys.push(periodKey(cursor, period));
+      stepPeriod(cursor, period);
+    }
+  } else {
+    keys = [...byPeriod.keys()].sort();
+  }
+  const labels = keys.map(k => periodLabel(k, period));
+  const periodDeltas = keys.map(k => {
+    const dc = byPeriod.get(k) || {};
+    return BUCKETS.reduce((s, b) => s + (dc[b.key] || 0), 0);
+  });
+  const datasets = BUCKETS.map(b => ({
+    label: b.label, backgroundColor: b.color, stack: 's', borderWidth: 0,
+    data: keys.map(k => (byPeriod.get(k) || {})[b.key] || 0),
+  }));
+  const dailyTopPlugin = {
+    id: 'simDailyTop',
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+      if (!meta || !meta.data) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      chart.data.labels.forEach((_label, i) => {
+        const delta = periodDeltas[i]; if (!delta) return;
+        const bar = meta.data[i]; if (!bar) return;
+        ctx.fillText(delta.toString(), bar.x, bar.y - 4);
+      });
+      ctx.restore();
+    },
+  };
+
+  if (simCharts.daily) simCharts.daily.destroy();
+  simCharts.daily = new Chart(document.getElementById('simDailyChart'), {
+    type: 'bar', data: { labels, datasets },
+    plugins: [ChartDataLabels, dailyTopPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 18 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex];
+            if (!v) return false;
+            const scale = ctx.chart.scales.y;
+            if (scale) {
+              const px = Math.abs(scale.getPixelForValue(v) - scale.getPixelForValue(0));
+              if (px < 16) return false;
+            }
+            return true;
+          },
+          color: '#0f172a', font: { weight: 'bold', size: 10 },
+          anchor: 'center', align: 'center', formatter: (v) => v,
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const key = keys[els[0].index];
+        const periodContacts = filtered.filter(l => periodKey(l.createdDate, period) === key);
+        const titlePrefix = period === 'day' ? 'Leads created on ' : period === 'week' ? 'Leads created the week of ' : 'Leads created in ';
+        showSimContacts(titlePrefix + periodLabel(key, period), periodContacts);
+      },
+      scales: {
+        x: { stacked: true, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+function renderSimScoreDonut(filtered) {
+  const total = filtered.length;
+  const counts = BUCKETS.map(b => filtered.filter(l => l.simScore >= b.min && l.simScore <= b.max).length);
+
+  if (simCharts.score) simCharts.score.destroy();
+  simCharts.score = new Chart(document.getElementById('simScoreChart'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: { labels: BUCKETS.map(b => b.label),
+            datasets: [{ data: counts, backgroundColor: BUCKETS.map(b => b.color), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+          color: '#0f172a', font: { weight: 'bold', size: 11 },
+          formatter: (v) => v,
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const b = BUCKETS[els[0].index];
+        const ctx = filtered.filter(l => l.simScore >= b.min && l.simScore <= b.max);
+        showSimContacts(b.label + ' — score bucket (simulated)', ctx);
+      },
+    },
+  });
+
+  document.getElementById('sim-bucket-table').innerHTML = BUCKETS.map((b,i) => {
+    const c = counts[i];
+    const pct = total ? (c/total*100).toFixed(1) : '0.0';
+    return '<tr class="clickable" data-bucket="' + b.key + '">' +
+           '<td><span class="pill ' + b.key + '">' + b.label + '</span></td>' +
+           '<td>' + c.toLocaleString() + '</td><td>' + pct + '%</td></tr>';
+  }).join('');
+  document.querySelectorAll('#sim-bucket-table tr.clickable').forEach(row => {
+    row.addEventListener('click', () => {
+      const key = row.dataset.bucket;
+      const b = BUCKETS.find(x => x.key === key);
+      const ctx = filtered.filter(l => l.simScore >= b.min && l.simScore <= b.max);
+      showSimContacts(b.label + ' — score bucket (simulated)', ctx);
+    });
+  });
+}
+
+function renderSimOpportunity(filtered) {
+  const labels = BUCKETS.map(b => b.label);
+  const oppCounts   = BUCKETS.map(b => filtered.filter(l => l.simScore >= b.min && l.simScore <= b.max && l.everOpenDeal === true).length);
+  const otherCounts = BUCKETS.map(b => filtered.filter(l => l.simScore >= b.min && l.simScore <= b.max && l.everOpenDeal !== true).length);
+  const totals = BUCKETS.map((_, i) => oppCounts[i] + otherCounts[i]);
+  const oppPct   = oppCounts.map((c, i)   => totals[i] ? (c / totals[i]) * 100 : 0);
+  const otherPct = otherCounts.map((c, i) => totals[i] ? (c / totals[i]) * 100 : 0);
+
+  if (simCharts.opp) simCharts.opp.destroy();
+  simCharts.opp = new Chart(document.getElementById('simOppChart'), {
+    type: 'bar', plugins: [ChartDataLabels],
+    data: { labels,
+      datasets: [
+        { label: 'Open Deal',    backgroundColor: '#16a34a', data: oppPct,   stack: 's', _counts: oppCounts,   _totals: totals },
+        { label: 'No open deal', backgroundColor: '#64748b', data: otherPct, stack: 's', _counts: otherCounts, _totals: totals },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } },
+        tooltip: { callbacks: { label: (item) => {
+          const count = item.dataset._counts[item.dataIndex];
+          const total = item.dataset._totals[item.dataIndex];
+          const pct = item.parsed.y;
+          return item.dataset.label + ': ' + count + ' (' + pct.toFixed(1) + '% of ' + total + ')';
+        }}},
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 4,
+          color: 'white', font: { weight: 'bold', size: 11 },
+          anchor: 'center', align: 'center', formatter: (v) => v.toFixed(2) + '%',
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const el = els[0];
+        const b = BUCKETS[el.index];
+        const isOpp = el.datasetIndex === 0;
+        const fullBucket = filtered.filter(l => l.simScore >= b.min && l.simScore <= b.max);
+        const displayed = fullBucket.filter(l => isOpp ? l.everOpenDeal === true : l.everOpenDeal !== true);
+        showSimContacts(b.label + (isOpp ? ' — with Open Deal' : ' — no Open Deal') + ' (simulated)', displayed, fullBucket);
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: true },
+        y: { beginAtZero: true, max: 100, stacked: true,
+             ticks: { callback: (v) => v + '%' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+function renderSimLeadMql(filtered) {
+  const groups = [
+    { key: 'lead', label: 'Non-MQL Lead (score < 50)', contacts: filtered.filter(l => l.simScore < 50) },
+    { key: 'mql',  label: 'MQL (score ≥ 50)',          contacts: filtered.filter(l => l.simScore >= 50) },
+  ];
+  const totals = groups.map(g => g.contacts.length);
+  const oppCounts   = groups.map(g => g.contacts.filter(l => l.everOpenDeal === true).length);
+  const otherCounts = groups.map((g, i) => totals[i] - oppCounts[i]);
+  const oppPct   = oppCounts.map((c, i)   => totals[i] ? (c / totals[i]) * 100 : 0);
+  const otherPct = otherCounts.map((c, i) => totals[i] ? (c / totals[i]) * 100 : 0);
+
+  if (simCharts.leadMql) simCharts.leadMql.destroy();
+  simCharts.leadMql = new Chart(document.getElementById('simLeadMqlChart'), {
+    type: 'bar', plugins: [ChartDataLabels],
+    data: {
+      labels: groups.map((g, i) => g.label + ' (' + totals[i].toLocaleString() + ')'),
+      datasets: [
+        { label: 'Open Deal',    backgroundColor: '#16a34a', data: oppPct,   stack: 's', _counts: oppCounts,   _totals: totals },
+        { label: 'No open deal', backgroundColor: '#64748b', data: otherPct, stack: 's', _counts: otherCounts, _totals: totals },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } },
+        tooltip: { callbacks: { label: (item) => {
+          const count = item.dataset._counts[item.dataIndex];
+          const total = item.dataset._totals[item.dataIndex];
+          const pct = item.parsed.y;
+          return item.dataset.label + ': ' + count + ' (' + pct.toFixed(1) + '% of ' + total + ')';
+        }}},
+        datalabels: {
+          display: (ctx) => ctx.dataset.data[ctx.dataIndex] >= 4,
+          color: 'white', font: { weight: 'bold', size: 12 },
+          anchor: 'center', align: 'center', formatter: (v) => v.toFixed(2) + '%',
+        },
+      },
+      onClick: (evt, els) => {
+        if (!els.length) return;
+        const el = els[0];
+        const group = groups[el.index];
+        const isOpp = el.datasetIndex === 0;
+        const displayed = group.contacts.filter(l => isOpp ? l.everOpenDeal === true : l.everOpenDeal !== true);
+        showSimContacts(group.label + (isOpp ? ' — with Open Deal' : ' — no Open Deal') + ' (simulated)', displayed, group.contacts);
+      },
+      scales: {
+        x: { grid: { display: false }, stacked: true },
+        y: { beginAtZero: true, max: 100, stacked: true,
+             ticks: { callback: (v) => v + '%' }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  });
+}
+
+// Simulator preset & date filters
+function setSimPreset(range) {
+  const to = new Date();
+  const from = range === 'all'
+    ? (LEADS.length ? new Date(Math.min(...LEADS.map(l => l.createdDate))) : to)
+    : new Date(Date.now() - (Number(range) - 1) * 86400000);
+  document.getElementById('sim-from').value = fmtDate(from);
+  document.getElementById('sim-to').value = fmtDate(to);
+  renderSimulator();
+}
+
+// Wire up after the document is ready
+function initSimulator() {
+  // Restore any previously-saved grid from this browser's localStorage.
+  loadScoringGridFromStorage();
+  // Restore exclusion toggles preference.
+  // - notfound: defaults to ON (checked in HTML), so we only turn it OFF when stored=='0'
+  // - empty:    defaults to OFF (unchecked in HTML), so we only turn it ON when stored=='1'
+  try {
+    const storedNotFound = localStorage.getItem('hubspot-dashboard-exclude-notfound-v1');
+    if (storedNotFound === '0') {
+      document.getElementById('exclude-notfound-toggle').checked = false;
+    }
+    const storedEmpty = localStorage.getItem('hubspot-dashboard-exclude-empty-v1');
+    if (storedEmpty === '1') {
+      document.getElementById('exclude-empty-toggle').checked = true;
+    }
+    // Backward-compat: if only the OLD combined toggle key existed, apply it to
+    // the "not found" toggle so behaviour stays consistent for existing users.
+    const legacy = localStorage.getItem('hubspot-dashboard-exclude-missing-v1');
+    if (storedNotFound === null && legacy === '0') {
+      document.getElementById('exclude-notfound-toggle').checked = false;
+    }
+  } catch (e) {}
+  renderSimulatorUI();
+  // Now that the UI is built AND the grid is loaded, set the save-button
+  // state and status label to reflect reality.
+  updateSaveButtonState();
+  document.querySelectorAll('#sim-presets button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#sim-presets button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setSimPreset(btn.dataset.range);
+    });
+  });
+  ['sim-from','sim-to'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+    document.querySelectorAll('#sim-presets button').forEach(b => b.classList.remove('active'));
+    renderSimulator();
+  }));
+  // Default to 7d to match the main dashboard
+  setSimPreset(7);
+}
+
+// Hook simulator init into load() — wrap load to call initSimulator on success
+const _origLoad = load;
+load = async function() {
+  await _origLoad();
+  if (LEADS.length) initSimulator();
+};
+
+load();
+</script>
+</body>
+</html>
