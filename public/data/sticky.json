@@ -62106,6 +62106,7 @@
     "240480701270",
     "240498408270",
     "24054193931",
+    "240710115690",
     "24071676073",
     "24086533457",
     "2412551",
@@ -287285,6 +287286,13 @@
       "hs_lastmodifieddate": "2026-08-07T11:34:01.989Z",
       "hs_object_id": "57248545203",
       "type_d_acteur": "Entreprise > 2000 salarié·e·s",
+      "type_dacteur__other": null
+    },
+    "57305307057": {
+      "createdate": "2026-08-08T15:07:03.523Z",
+      "hs_lastmodifieddate": "2026-08-08T15:17:05.820Z",
+      "hs_object_id": "57305307057",
+      "type_d_acteur": null,
       "type_dacteur__other": null
     }
   }
