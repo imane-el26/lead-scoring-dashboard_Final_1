@@ -998,6 +998,7 @@
     "12557951",
     "1258801",
     "12592033682",
+    "125943189768",
     "125958484524",
     "125987813189",
     "126015536146",
@@ -29996,6 +29997,10 @@
     "225550332506": {
       "firstOpenDealAt": "2026-08-14T08:30:35.925Z",
       "lifecycleAtConversion": "lead"
+    },
+    "125943189768": {
+      "firstOpenDealAt": "2026-08-19T16:28:18.275Z",
+      "lifecycleAtConversion": "customer"
     }
   },
   "everLeadIds": [
@@ -62221,6 +62226,23 @@
     "242688194720",
     "242853196957",
     "2428951",
+    "242970855338",
+    "243014767507",
+    "243024020083",
+    "243026483229",
+    "243027161479",
+    "243027420227",
+    "243039817570",
+    "243045611373",
+    "243056295695",
+    "243056647485",
+    "243057555482",
+    "243058040928",
+    "243070678928",
+    "243084990493",
+    "243085093505",
+    "243091118715",
+    "243097570615",
     "2432501",
     "24389452825",
     "24393274697",
@@ -96572,6 +96594,8 @@
     "242196474426",
     "242480207710",
     "2428951",
+    "243040280407",
+    "243043865419",
     "2432501",
     "24393274697",
     "2440701",
@@ -114574,6 +114598,51 @@
     "242197018187",
     "242197208968",
     "2428951",
+    "243024490517",
+    "243024985954",
+    "243025098886",
+    "243025266774",
+    "243026848316",
+    "243028385684",
+    "243028556725",
+    "243028692303",
+    "243032569747",
+    "243032789839",
+    "243033400611",
+    "243035718831",
+    "243035834393",
+    "243037808426",
+    "243038480182",
+    "243038749204",
+    "243040125039",
+    "243040321906",
+    "243041963537",
+    "243042532198",
+    "243042933089",
+    "243043281588",
+    "243044218891",
+    "243044676387",
+    "243045124891",
+    "243045450524",
+    "243046091800",
+    "243046458626",
+    "243046511481",
+    "243047181467",
+    "243047317771",
+    "243048257457",
+    "243048310301",
+    "243054622325",
+    "243054971011",
+    "243055383074",
+    "243056961936",
+    "243057752945",
+    "243058041103",
+    "243059112816",
+    "243059765399",
+    "243061255173",
+    "243082891961",
+    "243098082910",
+    "243098123019",
     "2432501",
     "24389452825",
     "2440701",
@@ -140947,6 +141016,7 @@
     "19879101",
     "19880401",
     "19880751",
+    "198816282198",
     "198816531849",
     "19884201",
     "198851",
@@ -143314,6 +143384,7 @@
     "232027205646",
     "232027953298",
     "232027953299",
+    "232145358969",
     "232145361770",
     "232145361937",
     "23215252823",
@@ -143400,7 +143471,13 @@
     "2413251",
     "241542200334",
     "2421451",
+    "242794624317",
     "242794691996",
+    "242794872365",
+    "242977529370",
+    "243026169522",
+    "243036289289",
+    "243039040330",
     "2432501",
     "24431162479",
     "24612175505",
@@ -288024,6 +288101,153 @@
       "createdate": "2026-08-18T21:14:27.942Z",
       "hs_lastmodifieddate": "2026-08-18T21:24:47.322Z",
       "hs_object_id": "57656830767",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
+    },
+    "57692563265": {
+      "createdate": "2026-08-19T20:16:44.287Z",
+      "hs_lastmodifieddate": "2026-08-19T20:24:03.387Z",
+      "hs_object_id": "57692563265",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Indep. or Small business < 50 ETP"
+    },
+    "57687043590": {
+      "createdate": "2026-08-19T20:16:40.234Z",
+      "hs_lastmodifieddate": "2026-08-19T20:23:52.585Z",
+      "hs_object_id": "57687043590",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57689936706": {
+      "createdate": "2026-08-19T22:45:03.963Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:46.409Z",
+      "hs_object_id": "57689936706",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Association"
+    },
+    "57695868496": {
+      "createdate": "2026-08-19T22:44:39.578Z",
+      "hs_lastmodifieddate": "2026-08-19T22:51:52.517Z",
+      "hs_object_id": "57695868496",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
+    },
+    "57693539149": {
+      "createdate": "2026-08-19T20:17:22.298Z",
+      "hs_lastmodifieddate": "2026-08-19T20:24:40.885Z",
+      "hs_object_id": "57693539149",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57676391052": {
+      "createdate": "2026-08-19T22:45:10.683Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:46.537Z",
+      "hs_object_id": "57676391052",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
+    },
+    "57644648549": {
+      "createdate": "2026-08-19T13:28:17.647Z",
+      "hs_lastmodifieddate": "2026-08-19T13:42:28.456Z",
+      "hs_object_id": "57644648549",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Association"
+    },
+    "57677161790": {
+      "createdate": "2026-08-19T20:17:23.881Z",
+      "hs_lastmodifieddate": "2026-08-19T20:24:30.984Z",
+      "hs_object_id": "57677161790",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Indep. or Small business < 50 ETP"
+    },
+    "57670498315": {
+      "createdate": "2026-08-19T20:33:14.656Z",
+      "hs_lastmodifieddate": "2026-08-19T20:40:32.194Z",
+      "hs_object_id": "57670498315",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Indep. or Small business < 50 ETP"
+    },
+    "57683035765": {
+      "createdate": "2026-08-19T20:17:13.827Z",
+      "hs_lastmodifieddate": "2026-08-19T20:24:36.697Z",
+      "hs_object_id": "57683035765",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
+    },
+    "57689476124": {
+      "createdate": "2026-08-19T22:44:43.246Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:46.437Z",
+      "hs_object_id": "57689476124",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57681798226": {
+      "createdate": "2026-08-19T20:26:58.838Z",
+      "hs_lastmodifieddate": "2026-08-19T20:37:11.798Z",
+      "hs_object_id": "57681798226",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Training org"
+    },
+    "57687197017": {
+      "createdate": "2026-08-19T20:16:48.092Z",
+      "hs_lastmodifieddate": "2026-08-19T20:24:07.801Z",
+      "hs_object_id": "57687197017",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
+    },
+    "57673904994": {
+      "createdate": "2026-08-19T22:44:31.693Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:47.110Z",
+      "hs_object_id": "57673904994",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57631945789": {
+      "createdate": "2026-08-19T15:15:21.029Z",
+      "hs_lastmodifieddate": "2026-08-19T15:26:44.461Z",
+      "hs_object_id": "57631945789",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57692410507": {
+      "createdate": "2026-08-19T20:16:43.299Z",
+      "hs_lastmodifieddate": "2026-08-19T20:23:55.221Z",
+      "hs_object_id": "57692410507",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57673905002": {
+      "createdate": "2026-08-19T22:45:05.926Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:46.589Z",
+      "hs_object_id": "57673905002",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57680561330": {
+      "createdate": "2026-08-19T18:08:16.426Z",
+      "hs_lastmodifieddate": "2026-08-19T18:24:31.943Z",
+      "hs_object_id": "57680561330",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
+    },
+    "57682880010": {
+      "createdate": "2026-08-19T20:17:03.314Z",
+      "hs_lastmodifieddate": "2026-08-19T20:24:22.465Z",
+      "hs_object_id": "57682880010",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57681646968": {
+      "createdate": "2026-08-19T22:45:15.899Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:46.533Z",
+      "hs_object_id": "57681646968",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57691175027": {
+      "createdate": "2026-08-19T22:44:47.047Z",
+      "hs_lastmodifieddate": "2026-08-19T22:52:46.326Z",
+      "hs_object_id": "57691175027",
       "type_d_acteur": null,
       "type_dacteur__other": null
     }
