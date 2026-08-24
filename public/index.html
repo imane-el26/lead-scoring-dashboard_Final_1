@@ -1290,29 +1290,29 @@ document.getElementById('source-filter-none').addEventListener('click', () => {
 
 const DEFAULT_SCORING_GRID = {
   seniority: {
-    "Director/VP": 35,
-    "Executive": 20,
+    "Director/VP": 30,
+    "Executive": 30,
     "Manager": 30,
-    "Senior IC / Lead": 15,
-    "Mid IC": 0,
-    "Freelance": -100,
-    "Employee": 0,
+    "Senior IC / Lead": 20,
+    "Mid IC": 15,
+    "Freelance": -10,
+    "Employee": 35,
     "Intern/Apprentice": 0,
     "External/Consultant": 0,
     "Value not found": 0,
     "Contact not found": 0,
   },
   department: {
-    "IT/InformationSystems": 35,
-    "Training/Learning&Development": 35,
-    "HR/People": 35,
-    "Finance/Accounting": 25,
-    "Sales": 25,
-    "General Management/Executive": 25,
-    "Operations": 25,
+    "IT/InformationSystems": 15,
+    "Training/Learning&Development": 15,
+    "HR/People": -25,
+    "Finance/Accounting": 0,
+    "Sales": 0,
+    "General Management/Executive": 0,
+    "Operations": 0,
     "Marketing/Communication": 0,
     "Compliance/Legal": 0,
-    "Innovation/DigitalTransformation": 0,
+    "Innovation/DigitalTransformation": 30,
     "Data": 0,
     "Design": 0,
     "Product": 0,
@@ -1322,17 +1322,23 @@ const DEFAULT_SCORING_GRID = {
     "Contact not found": 0,
   },
   acteur: {
-    "Entreprise - 50 à 2k ETP": 10,
-    "Entreprise > 2000 salarié·e·s": 10,
+    "Entreprise - 50 à 2k ETP": 35,
+    "Entreprise > 2000 salarié·e·s": 35,
     "Other": 0,  // delegates to acteur_other below
+    "Organisme de formation": 0,
+    "OAF/CFA Premium": 0,
+    "Indépendant": 0,
+    "Secteur public": 0,
+    "Association": 0,
+    "Association Premium": 0,
   },
   acteur_other: {
-    "Training org": -15,
-    "Training org - Premium": 10,
-    "Public Sector": -15,
+    "Training org": -10,
+    "Training org - Premium": 30,
+    "Public Sector": 0,
     "Premium Association": 5,
-    "Association": -15,
-    "Indep. or Small business < 50 ETP": -15,
+    "Association": -10,
+    "Indep. or Small business < 50 ETP": -10,
   },
   contact: {
     "unsubscribed_from_all_email": -100,  // applied when hs_email_optout === 'true'
@@ -1503,7 +1509,11 @@ function applyScoringGrid() {
 }
 
 function resetScoringGrid() {
-  if (!confirm("Reset all scores to the current HubSpot grid? This will discard your unsaved changes and your saved custom grid.")) return;
+  // Note: intentionally no confirm() dialog here — some embedded/restricted
+  // browser shells (e.g. VS Code's Simple Browser) silently block
+  // window.confirm(), which made this button a no-op for those users.
+  // Resetting only touches this browser's local simulation state, not any
+  // real HubSpot data, so skipping the confirmation is safe.
   SCORING_GRID = JSON.parse(JSON.stringify(DEFAULT_SCORING_GRID));
   try { localStorage.removeItem(SCORING_GRID_STORAGE_KEY); } catch (e) {}
   renderSimulatorUI();
