@@ -2977,6 +2977,7 @@
     "196162087460",
     "196209989471",
     "196243563950",
+    "196243563952",
     "196243889031",
     "196244030307",
     "196244035404",
@@ -30036,6 +30037,10 @@
     "237895919665": {
       "firstOpenDealAt": "2026-08-25T09:14:54.294Z",
       "lifecycleAtConversion": "lead"
+    },
+    "196243563952": {
+      "firstOpenDealAt": "2026-08-25T10:07:32.694Z",
+      "lifecycleAtConversion": "customer"
     }
   },
   "everLeadIds": [
@@ -62292,6 +62297,8 @@
     "24393274697",
     "244056476535",
     "2440701",
+    "244205048713",
+    "244229580086",
     "24431162479",
     "24468511139",
     "2447201",
@@ -119013,6 +119020,7 @@
     "97360071012",
     "97360072484",
     "97360072984",
+    "97360073639",
     "97360073890",
     "97360074124",
     "97367303311",
@@ -128208,6 +128216,7 @@
     "23713691185",
     "237352855188",
     "237441635410",
+    "237895919665",
     "238166805939",
     "238789132873",
     "238963984908",
@@ -288326,6 +288335,34 @@
       "hs_object_id": "57729385580",
       "type_d_acteur": "Other",
       "type_dacteur__other": "Premium Association"
+    },
+    "57724564609": {
+      "createdate": "2023-12-08T17:13:09.821Z",
+      "hs_lastmodifieddate": "2026-08-25T12:54:33.107Z",
+      "hs_object_id": "57724564609",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Training org - Premium"
+    },
+    "57729386536": {
+      "createdate": "2023-12-05T16:57:40.405Z",
+      "hs_lastmodifieddate": "2026-08-25T10:07:31.110Z",
+      "hs_object_id": "57729386536",
+      "type_d_acteur": "Entreprise - 50 à 2k ETP",
+      "type_dacteur__other": null
+    },
+    "57725780258": {
+      "createdate": "2026-08-25T14:06:46.114Z",
+      "hs_lastmodifieddate": "2026-08-25T14:16:43.560Z",
+      "hs_object_id": "57725780258",
+      "type_d_acteur": "Other",
+      "type_dacteur__other": "Indep. or Small business < 50 ETP"
+    },
+    "57745473668": {
+      "createdate": "2026-08-25T13:10:20.929Z",
+      "hs_lastmodifieddate": "2026-08-25T13:20:48.073Z",
+      "hs_object_id": "57745473668",
+      "type_d_acteur": null,
+      "type_dacteur__other": null
     }
   }
 }
