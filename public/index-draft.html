@@ -167,6 +167,40 @@
     .row.two-thirds, .row.half { grid-template-columns: 1fr; }
     main, header { padding: 16px; }
   }
+
+  /* Data quality tab */
+  .dq-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+              padding: 20px; margin-bottom: 16px; }
+  .dq-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .dq-icon { width: 34px; height: 34px; border-radius: 8px; background: #ecfdf5; color: #16a34a;
+             display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .dq-head h2 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+                text-transform: uppercase; color: var(--ink); flex: 1; }
+  .dq-pct { font-size: 26px; font-weight: 700; color: #16a34a; }
+  .dq-bar-track { height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+  .dq-bar-fill { height: 100%; background: #4d8b3f; border-radius: 6px; transition: width 0.3s ease; }
+  .dq-sub { font-size: 13px; color: var(--muted); }
+  .dq-sub strong { font-size: 15px; color: var(--ink); }
+  .dq-current-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+                       color: var(--muted); margin: 20px 0 8px; padding-top: 16px;
+                       border-top: 1px solid var(--line); }
+  .dq-desc { font-size: 12px; color: var(--muted); margin: -4px 0 12px; }
+
+  /* Manual QA — LinkedIn URL Quality (static, hand-audited data) */
+  .qa-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .qa-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .qa-date { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .qa-method { font-size: 12px; color: var(--muted); }
+  .qa-link { font-size: 12px; color: var(--ink); text-decoration: underline dotted; text-underline-offset: 3px; }
+  .qa-link:hover { color: var(--muted); }
+  .qa-metric-label { font-size: 12px; font-weight: 600; color: var(--muted); margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .qa-metric-label:first-of-type { margin-top: 12px; }
+  .qa-bar-track { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: var(--bg); }
+  .qa-seg.good { background: #22c55e; }
+  .qa-seg.uncertain { background: #f59e0b; }
+  .qa-seg.wrong { background: #ef4444; }
+  .qa-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .qa-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -178,7 +212,8 @@
   <div class="state" id="state">Loading data…</div>
   <div id="content" style="display:none">
     <div class="tabs">
-      <button id="tab-dashboard" class="active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button id="tab-dashboard" class="active" onclick="switchTab('dashboard')">Lead Analytics</button>
+      <button id="tab-dataquality" onclick="switchTab('dataquality')">Data Quality</button>
       <button id="tab-simulator" onclick="switchTab('simulator')">Scoring simulator</button>
     </div>
 
@@ -257,6 +292,204 @@
       </div>
     </div>
     </div><!-- end panel-dashboard -->
+
+    <!-- ========== DATA QUALITY TAB ========== -->
+    <div id="panel-dataquality" class="tab-panel">
+
+      <!-- Manual QA — LinkedIn URL Quality. Static, hand-audited data (NOT
+           derived from the live dataset below) — two one-off sampling passes
+           comparing the LinkedIn-matching method. Kept here as context for
+           the automated numbers further down. -->
+      <div class="row half" style="margin-bottom:16px">
+        <div class="qa-panel">
+          <div class="qa-head">
+            <span class="qa-date">22/05/2026</span>
+            <span class="qa-method">Method: Serpapi</span>
+            <a class="qa-link" href="https://docs.google.com/spreadsheets/d/1r7JbrtHXgxBAQ2lDP8ablPAqudvwv8le-pEId_lrWPQ/edit?gid=1491552436#gid=1491552436" target="_blank" rel="noopener">↗ Source sheet</a>
+          </div>
+          <div class="qa-metric-label">Contacts (n=300)</div>
+          <div class="qa-bar-track">
+            <div class="qa-seg good" style="width:75.33%"></div>
+            <div class="qa-seg uncertain" style="width:1.33%"></div>
+            <div class="qa-seg wrong" style="width:23.33%"></div>
+          </div>
+          <div class="qa-legend">
+            <span><span class="dot" style="background:#22c55e"></span>Correct 226 (75.3%)</span>
+            <span><span class="dot" style="background:#f59e0b"></span>Uncertain 4 (1.3%)</span>
+            <span><span class="dot" style="background:#ef4444"></span>Wrong 70 (23.3%)</span>
+          </div>
+          <div class="qa-metric-label">Companies (n=150)</div>
+          <div class="qa-bar-track">
+            <div class="qa-seg good" style="width:78.00%"></div>
+            <div class="qa-seg uncertain" style="width:5.33%"></div>
+            <div class="qa-seg wrong" style="width:16.67%"></div>
+          </div>
+          <div class="qa-legend">
+            <span><span class="dot" style="background:#22c55e"></span>Correct 117 (78.0%)</span>
+            <span><span class="dot" style="background:#f59e0b"></span>Uncertain 8 (5.3%)</span>
+            <span><span class="dot" style="background:#ef4444"></span>Wrong 25 (16.7%)</span>
+          </div>
+        </div>
+
+        <div class="qa-panel">
+          <div class="qa-head">
+            <span class="qa-date">17/07/2026</span>
+            <span class="qa-method">Method: Anthropic API</span>
+            <a class="qa-link" href="https://docs.google.com/spreadsheets/d/1ymbXx5ZTHkuudzm-dOCj0a7j9RYOtfL9/edit?gid=1349144274#gid=1349144274" target="_blank" rel="noopener">↗ Source sheet</a>
+          </div>
+          <div class="qa-metric-label">Contacts (n=300)</div>
+          <div class="qa-bar-track">
+            <div class="qa-seg good" style="width:91.33%"></div>
+            <div class="qa-seg uncertain" style="width:7.00%"></div>
+            <div class="qa-seg wrong" style="width:1.67%"></div>
+          </div>
+          <div class="qa-legend">
+            <span><span class="dot" style="background:#22c55e"></span>Correct 274 (91.3%)</span>
+            <span><span class="dot" style="background:#f59e0b"></span>Uncertain 21 (7.0%)</span>
+            <span><span class="dot" style="background:#ef4444"></span>Wrong 5 (1.7%)</span>
+          </div>
+          <div class="qa-metric-label">Companies (n=150)</div>
+          <div class="qa-bar-track">
+            <div class="qa-seg good" style="width:86.00%"></div>
+            <div class="qa-seg uncertain" style="width:6.67%"></div>
+            <div class="qa-seg wrong" style="width:7.33%"></div>
+          </div>
+          <div class="qa-legend">
+            <span><span class="dot" style="background:#22c55e"></span>Correct 129 (86.0%)</span>
+            <span><span class="dot" style="background:#f59e0b"></span>Uncertain 10 (6.7%)</span>
+            <span><span class="dot" style="background:#ef4444"></span>Wrong 11 (7.3%)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="group" id="dq-presets">
+          <button data-range="7">7d</button>
+          <button data-range="30">30d</button>
+          <button data-range="90">90d</button>
+          <button data-range="365">1y</button>
+          <button data-range="all" class="active">All</button>
+        </div>
+        <label>From</label><input type="date" id="dq-from">
+        <label>To</label><input type="date" id="dq-to">
+        <label>Status</label>
+        <div id="dq-status-filter-wrap" style="position:relative">
+          <button type="button" id="dq-status-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span id="dq-status-filter-label">All</span>
+            <span style="opacity:.5;font-size:10px">▼</span>
+          </button>
+          <div id="dq-status-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+            <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
+              <button type="button" id="dq-status-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
+              <button type="button" id="dq-status-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+            </div>
+            <div id="dq-status-filter-options"></div>
+          </div>
+        </div>
+        <label>Marketing contact</label>
+        <div id="dq-marketing-filter-wrap" style="position:relative">
+          <button type="button" id="dq-marketing-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span id="dq-marketing-filter-label">All</span>
+            <span style="opacity:.5;font-size:10px">▼</span>
+          </button>
+          <div id="dq-marketing-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:200px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+            <div id="dq-marketing-filter-options">
+              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                <input type="checkbox" value="yes" checked><span>Marketing contact</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                <input type="checkbox" value="no" checked><span>Not marketing contact</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin:-4px 0 16px">
+        A contact counts as <strong>enriched</strong> when <code>reasoning_contact</code> is filled in (not empty).
+      </p>
+
+      <!-- Contacts enrichment -->
+      <div class="dq-panel">
+        <div class="dq-head">
+          <span class="dq-icon">👤</span>
+          <h2>Contacts</h2>
+          <span class="dq-pct" id="dq-contacts-pct">0%</span>
+        </div>
+        <div class="dq-bar-track"><div class="dq-bar-fill" id="dq-contacts-bar" style="width:0%"></div></div>
+        <div class="dq-sub"><strong id="dq-contacts-enriched">0</strong> enriched / <span id="dq-contacts-total">0</span> total base</div>
+
+        <div class="dq-current-title">Current situation</div>
+        <p class="dq-desc">Click a row to see the contacts behind it.</p>
+        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+          <tbody id="dq-contacts-table"></tbody>
+        </table>
+      </div>
+
+      <!-- Companies enrichment -->
+      <div class="dq-panel">
+        <div class="dq-head">
+          <span class="dq-icon">🏢</span>
+          <h2>Companies</h2>
+          <span class="dq-pct" id="dq-companies-pct">0%</span>
+        </div>
+        <div class="dq-bar-track"><div class="dq-bar-fill" id="dq-companies-bar" style="width:0%"></div></div>
+        <div class="dq-sub"><strong id="dq-companies-enriched">0</strong> enriched / <span id="dq-companies-total">0</span> total base</div>
+        <p class="dq-desc" style="margin-top:8px">
+          Total base = every company in your HubSpot portal, created within the selected date range
+          (not just companies with an associated contact). Enriched = <code>reasoning_company</code>
+          is filled in (not empty).
+        </p>
+
+        <div class="dq-current-title">Current situation</div>
+        <p class="dq-desc">Click a row to see any known contacts at those companies (some companies have none).</p>
+        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+          <tbody id="dq-companies-table"></tbody>
+        </table>
+      </div>
+
+      <!-- Enrichment within the Open Deal base -->
+      <div class="dq-panel">
+        <div class="dq-head">
+          <span class="dq-icon">🤝</span>
+          <h2>Open Deal Contacts</h2>
+          <span class="dq-pct" id="dq-odenrich-pct">0%</span>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:13px;color:var(--muted);margin-right:8px">Main contact</label>
+          <div id="dq-mc-filter-wrap" style="position:relative;display:inline-block">
+            <button type="button" id="dq-mc-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:180px;text-align:left;cursor:pointer;display:inline-flex;justify-content:space-between;align-items:center;gap:8px">
+              <span id="dq-mc-filter-label">All</span>
+              <span style="opacity:.5;font-size:10px">▼</span>
+            </button>
+            <div id="dq-mc-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+              <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
+                <button type="button" id="dq-mc-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
+                <button type="button" id="dq-mc-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+              </div>
+              <div id="dq-mc-filter-options">
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="main" checked><span>Main contact</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="notmain" checked><span>Not main contact</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="nodeal" checked><span>No deal association</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dq-bar-track"><div class="dq-bar-fill" id="dq-odenrich-bar" style="width:0%"></div></div>
+        <div class="dq-sub"><strong id="dq-odenrich-enriched">0</strong> enriched / <span id="dq-odenrich-total">0</span> <span id="dq-odenrich-suffix">ever Open Deal</span></div>
+
+        <div class="dq-current-title">Current situation</div>
+        <p class="dq-desc">Click a row to see the contacts behind it.</p>
+        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+          <tbody id="dq-odenrich-table"></tbody>
+        </table>
+      </div>
+    </div><!-- end panel-dataquality -->
 
     <!-- ========== SCORING SIMULATOR TAB ========== -->
     <div id="panel-simulator" class="tab-panel">
@@ -429,6 +662,7 @@ const LIFECYCLE_LABELS = {
 };
 
 let LEADS = [];
+let COMPANIES = [];
 let PORTAL_ID = '';
 let charts = {};
 
@@ -1087,6 +1321,13 @@ function leadsToCSV(leads) {
   return '\ufeff' + headers.join(',') + '\n' + rows.join('\n');
 }
 
+function companiesToCSV(companies) {
+  const headers = ['id', 'name', 'created', 'type_d_acteur', 'type_dacteur__other',
+                    'linkedin_company_page', 'reasoning_company'];
+  const rows = companies.map(c => headers.map(h => csvEscape(c[h] ?? '')).join(','));
+  return '\ufeff' + headers.join(',') + '\n' + rows.join('\n');
+}
+
 function downloadCSV(filename, csvText) {
   const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -1111,11 +1352,20 @@ document.getElementById('export-btn').addEventListener('click', () => {
 // only a subset in the table.
 let modalContacts = [];
 let modalExportContacts = [];
+// Which kind of records the modal is currently showing — 'contacts' (the
+// default) or 'companies' (see showCompanies(), used by the Data quality
+// tab's Companies panel). Controls what the Export button downloads.
+let modalMode = 'contacts';
+let modalCompanies = [];
 document.getElementById('modal-export').addEventListener('click', () => {
   const stamp = fmtDate(new Date());
   const title = (document.getElementById('modal-title').textContent || 'contacts')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
-  downloadCSV('hubspot-leads-' + (title || 'segment') + '-' + stamp + '.csv', leadsToCSV(modalExportContacts));
+  if (modalMode === 'companies') {
+    downloadCSV('companies-' + (title || 'segment') + '-' + stamp + '.csv', companiesToCSV(modalCompanies));
+  } else {
+    downloadCSV('hubspot-leads-' + (title || 'segment') + '-' + stamp + '.csv', leadsToCSV(modalExportContacts));
+  }
 });
 
 // --- Modal ---
@@ -1125,6 +1375,7 @@ document.getElementById('modal-export').addEventListener('click', () => {
 let modalFromSimulator = false;
 
 function showContacts(title, contacts, exportContacts) {
+  modalMode = 'contacts';
   modalContacts = contacts || [];
   // If the chart passes a wider cohort for export, use it; otherwise use the
   // displayed contacts as the export set.
@@ -1158,6 +1409,7 @@ function showContacts(title, contacts, exportContacts) {
       '<thead><tr>' +
         '<th>ID</th>' +
         '<th>Name</th>' +
+        '<th title="lemlistlinkedinurl">LinkedIn</th>' +
         '<th>Email</th>' +
         '<th>Created</th>' +
         '<th title="Auto-score : Company &amp; Person profile (primary score, drives the bucketing)">Score</th>' +
@@ -1189,6 +1441,16 @@ function showContacts(title, contacts, exportContacts) {
             + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:500">'
             + esc(name) + ' ↗</a>'
           : esc(name);
+        // lemlistlinkedinurl sometimes holds a placeholder like "Pas trouvé" /
+        // "Not found" / "Confiance insuffisante" instead of a real URL — only
+        // render as a clickable link when it actually looks like one, otherwise
+        // show the raw text so it's clear why (a broken link otherwise looks
+        // identical to a working one, and clicking it does nothing useful).
+        const linkedinUrl = (l.quality || {}).lemlistlinkedinurl;
+        const linkedinIsUrl = linkedinUrl && /^https?:\/\//i.test(linkedinUrl.trim());
+        const linkedinCell = linkedinIsUrl
+          ? '<a href="' + esc(linkedinUrl) + '" target="_blank" rel="noopener">↗ LinkedIn</a>'
+          : (linkedinUrl ? esc(linkedinUrl) : '—');
         const engagement = (l.scoreEngagement != null ? l.scoreEngagement : 0).toFixed(0);
         const leadScore  = (l.scoreLead != null ? l.scoreLead : 0).toFixed(0);
         // Scoring criteria — fall back gracefully if a contact has no criteria (e.g. older sticky)
@@ -1206,6 +1468,7 @@ function showContacts(title, contacts, exportContacts) {
         return '<tr>' +
           '<td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)">' + esc(l.id || '—') + '</td>' +
           '<td>' + nameCell + '</td>' +
+          '<td style="font-size:12px">' + linkedinCell + '</td>' +
           '<td>' + (esc(l.email) || '—') + '</td>' +
           '<td>' + fmtDate(l.createdDate) + '</td>' +
           '<td><span class="pill ' + b.key + '">' + l.score.toFixed(0) + '</span></td>' +
@@ -1227,6 +1490,61 @@ function showContacts(title, contacts, exportContacts) {
       }).join('') +
       '</tbody></table></div>' +
       (anySticky ? '<p style="font-size:12px;color:var(--muted);margin-top:12px">★ = previously reached Open Deal; current status has changed since (sticky).</p>' : '');
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+// Company-record modal — used by the Data quality tab's Companies panel.
+// Separate from showContacts() because companies have entirely different
+// columns (name, Type d'acteur...) and most have zero associated contacts,
+// so the contacts table would be empty/irrelevant for them.
+function showCompanies(title, companies) {
+  modalMode = 'companies';
+  modalCompanies = companies || [];
+  document.getElementById('modal-title').textContent = title;
+  const count = companies.length;
+  document.getElementById('modal-count').textContent =
+    ' — ' + count + ' compan' + (count === 1 ? 'y' : 'ies');
+  const expBtn = document.getElementById('modal-export');
+  if (expBtn) {
+    expBtn.title = 'Export the ' + count + ' compan' + (count === 1 ? 'y' : 'ies') + ' shown as CSV';
+  }
+  const body = document.getElementById('modal-body');
+  if (!companies.length) {
+    body.innerHTML = '<div class="empty-mini">No companies in this segment.</div>';
+  } else {
+    const sorted = [...companies].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    body.innerHTML = '<div style="overflow-x:auto"><table>' +
+      '<thead><tr>' +
+        '<th>ID</th>' +
+        '<th>Name</th>' +
+        '<th>Created</th>' +
+        '<th title="type_d_acteur">Type d\'acteur</th>' +
+        '<th title="type_dacteur__other — only filled when Type d\'acteur = Other">Type d\'acteur (Other)</th>' +
+        '<th>LinkedIn</th>' +
+        '<th title="reasoning_company">Reasoning</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+      sorted.map(c => {
+        const nameCell = (PORTAL_ID && c.id)
+          ? '<a href="https://app.hubspot.com/contacts/' + PORTAL_ID + '/record/0-2/' + esc(c.id)
+            + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:500">'
+            + (esc(c.name) || '(no name)') + ' ↗</a>'
+          : (esc(c.name) || '(no name)');
+        const linkedinCell = c.linkedin_company_page
+          ? '<a href="' + esc(c.linkedin_company_page) + '" target="_blank" rel="noopener">↗ LinkedIn</a>'
+          : '—';
+        return '<tr>' +
+          '<td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)">' + esc(c.id || '—') + '</td>' +
+          '<td>' + nameCell + '</td>' +
+          '<td>' + (c.createdDate ? fmtDate(c.createdDate) : '—') + '</td>' +
+          '<td style="font-size:12px">' + (esc(c.type_d_acteur) || '—') + '</td>' +
+          '<td style="font-size:12px">' + (esc(c.type_dacteur__other) || '—') + '</td>' +
+          '<td style="font-size:12px">' + linkedinCell + '</td>' +
+          '<td style="font-size:12px;max-width:360px">' + (esc(c.reasoning_company) || '—') + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
   }
   document.getElementById('modal').classList.add('open');
 }
@@ -1531,6 +1849,265 @@ function switchTab(name) {
     // (Re)render on first open so charts size correctly
     renderSimulator();
   }
+  if (name === 'dataquality') {
+    renderDataQuality();
+  }
+}
+
+// ============================================================
+// DATA QUALITY TAB
+// ============================================================
+// Has its own date range (independent from the Dashboard tab's filters),
+// with the same 7d/30d/90d/1y/All presets. Defaults to All.
+
+// Enriched = reasoning_contact is filled in (not empty).
+function contactIsEnriched(l) {
+  const reasoning = (l.quality || {}).reasoning_contact;
+  return !!(reasoning && String(reasoning).trim());
+}
+
+// Date range + Status + Marketing contact all apply tab-wide, to both the
+// Contacts panel and the Data quality — Open Deal contacts panel.
+function getDQFiltered() {
+  const from = parseDate(document.getElementById('dq-from').value);
+  const to   = parseDate(document.getElementById('dq-to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  const selectedStatuses = getSelectedDQStatuses();
+  const allStatuses = getAllDQStatuses();
+  const statusFilterActive = selectedStatuses.size > 0 && selectedStatuses.size < allStatuses.length;
+  const selectedMarketing = getSelectedDQMarketing();
+  return LEADS.filter(l => {
+    if (from && l.createdDate < from) return false;
+    if (toInclusive && l.createdDate > toInclusive) return false;
+    if (statusFilterActive && !selectedStatuses.has(l.status)) return false;
+    if (selectedStatuses.size === 0) return false;
+    if (!selectedMarketing.has(l.isMarketingContact ? 'yes' : 'no')) return false;
+    return true;
+  });
+}
+
+function setDQPreset(range) {
+  const to = new Date();
+  const from = range === 'all'
+    ? (LEADS.length ? new Date(Math.min(...LEADS.map(l => l.createdDate))) : to)
+    : new Date(Date.now() - (Number(range) - 1) * 86400000);
+  document.getElementById('dq-from').value = fmtDate(from);
+  document.getElementById('dq-to').value = fmtDate(to);
+  renderDataQuality();
+}
+
+// Generic wiring for a checkbox-dropdown multi-select (same shell as the
+// Source filter on the Dashboard tab and the Main-contact filter here).
+// `onChange` runs after every check/select-all/clear.
+function wireDQCheckboxDropdown(prefix, onChange) {
+  document.getElementById(prefix + '-filter-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const panel = document.getElementById(prefix + '-filter-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById(prefix + '-filter-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById(prefix + '-filter-panel').style.display = 'none';
+    }
+  });
+  const allBtn = document.getElementById(prefix + '-filter-all');
+  if (allBtn) allBtn.addEventListener('click', () => {
+    document.querySelectorAll('#' + prefix + '-filter-options input').forEach(cb => cb.checked = true);
+    onChange();
+  });
+  const noneBtn = document.getElementById(prefix + '-filter-none');
+  if (noneBtn) noneBtn.addEventListener('click', () => {
+    document.querySelectorAll('#' + prefix + '-filter-options input').forEach(cb => cb.checked = false);
+    onChange();
+  });
+  document.querySelectorAll('#' + prefix + '-filter-options input').forEach(cb => {
+    cb.addEventListener('change', onChange);
+  });
+}
+
+function updateCheckboxDropdownLabel(prefix) {
+  const total = document.querySelectorAll('#' + prefix + '-filter-options input').length;
+  const checked = document.querySelectorAll('#' + prefix + '-filter-options input:checked').length;
+  const lbl = document.getElementById(prefix + '-filter-label');
+  if (checked === 0)          lbl.textContent = 'None';
+  else if (checked === total) lbl.textContent = 'All';
+  else if (checked === 1)     lbl.textContent = document.querySelector('#' + prefix + '-filter-options input:checked').nextElementSibling.textContent;
+  else                        lbl.textContent = checked + ' selected';
+}
+
+// Wired once the data has loaded (see the wrapped `load` below).
+function initDataQualityFilters() {
+  document.querySelectorAll('#dq-presets button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#dq-presets button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setDQPreset(btn.dataset.range);
+    });
+  });
+  ['dq-from', 'dq-to'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+    document.querySelectorAll('#dq-presets button').forEach(b => b.classList.remove('active'));
+    renderDataQuality();
+  }));
+
+  // Status filter — options built dynamically from every distinct hs_lead_status
+  // value present in LEADS, same idea as the Source filter on the Dashboard tab.
+  const statusOptions = document.getElementById('dq-status-filter-options');
+  [...new Set(LEADS.map(l => l.status).filter(Boolean))].sort().forEach(status => {
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px';
+    lbl.onmouseover = () => lbl.style.background = 'var(--bg)';
+    lbl.onmouseout = () => lbl.style.background = '';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = status; cb.checked = true;
+    lbl.appendChild(cb);
+    const span = document.createElement('span');
+    span.textContent = status;
+    lbl.appendChild(span);
+    statusOptions.appendChild(lbl);
+  });
+  wireDQCheckboxDropdown('dq-status', () => { updateCheckboxDropdownLabel('dq-status'); renderDataQuality(); });
+  updateCheckboxDropdownLabel('dq-status');
+
+  // Main-contact multi-select.
+  wireDQCheckboxDropdown('dq-mc', () => { updateCheckboxDropdownLabel('dq-mc'); renderDataQuality(); });
+  updateCheckboxDropdownLabel('dq-mc');
+
+  // Marketing contact multi-select (fixed yes/no options, already in the HTML).
+  wireDQCheckboxDropdown('dq-marketing', () => { updateCheckboxDropdownLabel('dq-marketing'); renderDataQuality(); });
+  updateCheckboxDropdownLabel('dq-marketing');
+
+  setDQPreset('all');
+}
+
+function getSelectedMCCategories() {
+  return new Set(
+    [...document.querySelectorAll('#dq-mc-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+
+function getSelectedDQStatuses() {
+  return new Set(
+    [...document.querySelectorAll('#dq-status-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+function getAllDQStatuses() {
+  return [...document.querySelectorAll('#dq-status-filter-options input')].map(cb => cb.value);
+}
+function getSelectedDQMarketing() {
+  return new Set(
+    [...document.querySelectorAll('#dq-marketing-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+
+// Render one dq-panel's stat header (percentage + progress bar + counts).
+function renderDQStat(prefix, count, total) {
+  const pct = total ? (count / total * 100) : 0;
+  document.getElementById(prefix + '-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById(prefix + '-bar').style.width = pct.toFixed(1) + '%';
+  document.getElementById(prefix + '-total').textContent = total.toLocaleString();
+  return pct;
+}
+
+// Render a "current situation" breakdown table. `rows` = [{label, contacts}].
+// Each row is clickable and opens a modal — showContacts() by default, or
+// showCompanies() when mode === 'companies' (r.contacts then holds company
+// records, not contact records — name kept generic to avoid touching every
+// call site for a naming nuance).
+function renderDQTable(tbodyId, rows, mode) {
+  const showFn = mode === 'companies' ? showCompanies : showContacts;
+  const total = rows.reduce((s, r) => s + r.contacts.length, 0);
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = rows.map((r, i) => {
+    const pct = total ? (r.contacts.length / total * 100) : 0;
+    return '<tr class="clickable" data-idx="' + i + '">' +
+      '<td>' + esc(r.label) + '</td>' +
+      '<td>' + r.contacts.length.toLocaleString() + '</td>' +
+      '<td>' + pct.toFixed(1) + '%</td></tr>';
+  }).join('');
+  tbody.querySelectorAll('tr.clickable').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const r = rows[Number(tr.dataset.idx)];
+      showFn(r.label, r.contacts);
+    });
+  });
+}
+
+// Shared 2-row "Fully enriched / Not Enriched" breakdown, used by both the
+// Contacts panel and the Open Deal enrichment panel.
+function renderDQEnrichedTable(tbodyId, population) {
+  const enriched = population.filter(contactIsEnriched);
+  const notEnriched = population.filter(l => !contactIsEnriched(l));
+  renderDQTable(tbodyId, [
+    { label: 'Fully enriched', contacts: enriched },
+    { label: 'Not Enriched',   contacts: notEnriched },
+  ]);
+  return enriched;
+}
+
+function renderDQContacts(filtered) {
+  const total = filtered.length;
+  const enriched = renderDQEnrichedTable('dq-contacts-table', filtered);
+  renderDQStat('dq-contacts', enriched.length, total);
+  document.getElementById('dq-contacts-enriched').textContent = enriched.length.toLocaleString();
+}
+
+function mcCategoryOf(l) {
+  if (l.isMainContact === true)  return 'main';
+  if (l.isMainContact === false) return 'notmain';
+  return 'nodeal';
+}
+
+function renderDQOpenDealEnrichment(filtered) {
+  const openDealAll = filtered.filter(l => l.everOpenDeal === true);
+  const selected = getSelectedMCCategories();
+  const openDeal = openDealAll.filter(l => selected.has(mcCategoryOf(l)));
+
+  const total = openDeal.length;
+  const enriched = renderDQEnrichedTable('dq-odenrich-table', openDeal);
+  renderDQStat('dq-odenrich', enriched.length, total);
+  document.getElementById('dq-odenrich-enriched').textContent = enriched.length.toLocaleString();
+  document.getElementById('dq-odenrich-suffix').textContent =
+    selected.size === 3 ? 'ever Open Deal' : 'Open Deal (filtered by main contact)';
+}
+
+// COMPANIES is the full portal-wide company list (loaded from
+// companies.json) — most companies have zero associated contacts, so this
+// is NOT derived from LEADS. Filtered by the same date range as everything
+// else on this tab, using the company's own createdate.
+function getDQFilteredCompanies() {
+  const from = parseDate(document.getElementById('dq-from').value);
+  const to   = parseDate(document.getElementById('dq-to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  return COMPANIES.filter(c => {
+    if (from && c.createdDate < from) return false;
+    if (toInclusive && c.createdDate > toInclusive) return false;
+    return true;
+  });
+}
+
+function companyIsEnriched(c) {
+  const reasoning = c.reasoning_company;
+  return !!(reasoning && String(reasoning).trim());
+}
+
+function renderDQCompanies() {
+  const companies = getDQFilteredCompanies();
+  const enriched = companies.filter(companyIsEnriched);
+  const notEnriched = companies.filter(c => !companyIsEnriched(c));
+  renderDQStat('dq-companies', enriched.length, companies.length);
+  document.getElementById('dq-companies-enriched').textContent = enriched.length.toLocaleString();
+  renderDQTable('dq-companies-table', [
+    { label: 'Enriched',     contacts: enriched },
+    { label: 'Not Enriched', contacts: notEnriched },
+  ], 'companies');
+}
+
+function renderDataQuality() {
+  const filtered = getDQFiltered();
+  renderDQContacts(filtered);
+  renderDQCompanies();
+  renderDQOpenDealEnrichment(filtered);
 }
 
 // --- Simulator render (parallel to render() for the dashboard tab) ---
@@ -2002,11 +2579,32 @@ function initSimulator() {
   setSimPreset(7);
 }
 
+// Loads the full company list for the Data quality tab's Companies panel —
+// EVERY company in the portal, not just ones linked to a contact (most
+// companies have zero associated contacts, so deriving them from LEADS
+// would silently undercount).
+async function loadCompanies() {
+  try {
+    const resp = await fetch('./data/companies.json?ts=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    COMPANIES = (data.companies || [])
+      .map(c => ({ ...c, createdDate: new Date(c.created) }))
+      .filter(c => !isNaN(c.createdDate));
+  } catch (err) {
+    console.warn('Could not load companies.json:', err);
+  }
+}
+
 // Hook simulator init into load() — wrap load to call initSimulator on success
 const _origLoad = load;
 load = async function() {
   await _origLoad();
-  if (LEADS.length) initSimulator();
+  if (LEADS.length) {
+    await loadCompanies();
+    initSimulator();
+    initDataQualityFilters();
+  }
 };
 
 load();
