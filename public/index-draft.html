@@ -405,6 +405,23 @@
             </div>
           </div>
         </div>
+        <label title="Contacts with no firstname/lastname on file usually can't be enriched at all — only an email to go on.">Full name</label>
+        <div id="dq-fullname-filter-wrap" style="position:relative">
+          <button type="button" id="dq-fullname-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span id="dq-fullname-filter-label">All</span>
+            <span style="opacity:.5;font-size:10px">▼</span>
+          </button>
+          <div id="dq-fullname-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+            <div id="dq-fullname-filter-options">
+              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                <input type="checkbox" value="yes" checked><span>Has full name</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                <input type="checkbox" value="no" checked><span>No full name (email only)</span>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
       <p class="desc" style="margin:-4px 0 16px">
         A contact counts as <strong>enriched</strong> when <code>reasoning_contact</code> is filled in (not empty).
@@ -476,6 +493,25 @@
           <span class="dq-icon">🏢</span>
           <h2>Companies</h2>
           <span class="dq-pct" id="dq-companies-pct">0%</span>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:13px;color:var(--muted);margin-right:8px" title="A company with no name on file usually can't be enriched at all — nothing to search a reasoning/LinkedIn match against.">Company name</label>
+          <div id="dq-companyname-filter-wrap" style="position:relative;display:inline-block">
+            <button type="button" id="dq-companyname-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:inline-flex;justify-content:space-between;align-items:center;gap:8px">
+              <span id="dq-companyname-filter-label">All</span>
+              <span style="opacity:.5;font-size:10px">▼</span>
+            </button>
+            <div id="dq-companyname-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:200px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+              <div id="dq-companyname-filter-options">
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="yes" checked><span>Has name</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="no" checked><span>No name</span>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="dq-bar-track"><div class="dq-bar-fill" id="dq-companies-bar" style="width:0%"></div></div>
         <div class="dq-sub"><strong id="dq-companies-enriched">0</strong> enriched / <span id="dq-companies-total">0</span> total base</div>
@@ -1868,8 +1904,15 @@ function contactIsEnriched(l) {
   return !!(reasoning && String(reasoning).trim());
 }
 
-// Date range + Status + Marketing contact all apply tab-wide, to both the
-// Contacts panel and the Data quality — Open Deal contacts panel.
+// A contact with no first/last name — just an email address — usually can't
+// be enriched at all (nothing to match a LinkedIn profile against), so it's
+// worth being able to isolate them separately from genuine enrichment misses.
+function hasFullName(l) {
+  return !!((l.firstname && l.firstname.trim()) && (l.lastname && l.lastname.trim()));
+}
+
+// Date range + Status + Marketing contact + Full name all apply tab-wide, to
+// both the Contacts panel and the Data quality — Open Deal contacts panel.
 function getDQFiltered() {
   const from = parseDate(document.getElementById('dq-from').value);
   const to   = parseDate(document.getElementById('dq-to').value);
@@ -1878,12 +1921,14 @@ function getDQFiltered() {
   const allStatuses = getAllDQStatuses();
   const statusFilterActive = selectedStatuses.size > 0 && selectedStatuses.size < allStatuses.length;
   const selectedMarketing = getSelectedDQMarketing();
+  const selectedFullName = getSelectedDQFullName();
   return LEADS.filter(l => {
     if (from && l.createdDate < from) return false;
     if (toInclusive && l.createdDate > toInclusive) return false;
     if (statusFilterActive && !selectedStatuses.has(l.status)) return false;
     if (selectedStatuses.size === 0) return false;
     if (!selectedMarketing.has(l.isMarketingContact ? 'yes' : 'no')) return false;
+    if (!selectedFullName.has(hasFullName(l) ? 'yes' : 'no')) return false;
     return true;
   });
 }
@@ -1979,6 +2024,15 @@ function initDataQualityFilters() {
   wireDQCheckboxDropdown('dq-marketing', () => { updateCheckboxDropdownLabel('dq-marketing'); renderDataQuality(); });
   updateCheckboxDropdownLabel('dq-marketing');
 
+  // Full name multi-select (fixed yes/no options, already in the HTML).
+  wireDQCheckboxDropdown('dq-fullname', () => { updateCheckboxDropdownLabel('dq-fullname'); renderDataQuality(); });
+  updateCheckboxDropdownLabel('dq-fullname');
+
+  // Company name multi-select — lives inside the Companies panel, not the
+  // top bar (fixed yes/no options, already in the HTML).
+  wireDQCheckboxDropdown('dq-companyname', () => { updateCheckboxDropdownLabel('dq-companyname'); renderDataQuality(); });
+  updateCheckboxDropdownLabel('dq-companyname');
+
   setDQPreset('all');
 }
 
@@ -1999,6 +2053,16 @@ function getAllDQStatuses() {
 function getSelectedDQMarketing() {
   return new Set(
     [...document.querySelectorAll('#dq-marketing-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+function getSelectedDQFullName() {
+  return new Set(
+    [...document.querySelectorAll('#dq-fullname-filter-options input:checked')].map(cb => cb.value)
+  );
+}
+function getSelectedDQCompanyName() {
+  return new Set(
+    [...document.querySelectorAll('#dq-companyname-filter-options input:checked')].map(cb => cb.value)
   );
 }
 
@@ -2073,17 +2137,28 @@ function renderDQOpenDealEnrichment(filtered) {
     selected.size === 3 ? 'ever Open Deal' : 'Open Deal (filtered by main contact)';
 }
 
+// A company with no name — nothing to search a reasoning/LinkedIn match
+// against — usually can't be enriched at all, same idea as hasFullName() for
+// contacts.
+function hasCompanyName(c) {
+  return !!(c.name && c.name.trim());
+}
+
 // COMPANIES is the full portal-wide company list (loaded from
 // companies.json) — most companies have zero associated contacts, so this
 // is NOT derived from LEADS. Filtered by the same date range as everything
-// else on this tab, using the company's own createdate.
+// else on this tab, using the company's own createdate. The Company name
+// filter lives inside the Companies panel itself (not the top bar), so it's
+// applied here rather than in getDQFiltered().
 function getDQFilteredCompanies() {
   const from = parseDate(document.getElementById('dq-from').value);
   const to   = parseDate(document.getElementById('dq-to').value);
   const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  const selectedName = getSelectedDQCompanyName();
   return COMPANIES.filter(c => {
     if (from && c.createdDate < from) return false;
     if (toInclusive && c.createdDate > toInclusive) return false;
+    if (!selectedName.has(hasCompanyName(c) ? 'yes' : 'no')) return false;
     return true;
   });
 }
