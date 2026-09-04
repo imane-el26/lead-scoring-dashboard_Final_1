@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>HubSpot Leads Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%93%8A</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -426,28 +427,6 @@
         </table>
       </div>
 
-      <!-- Companies enrichment -->
-      <div class="dq-panel">
-        <div class="dq-head">
-          <span class="dq-icon">🏢</span>
-          <h2>Companies</h2>
-          <span class="dq-pct" id="dq-companies-pct">0%</span>
-        </div>
-        <div class="dq-bar-track"><div class="dq-bar-fill" id="dq-companies-bar" style="width:0%"></div></div>
-        <div class="dq-sub"><strong id="dq-companies-enriched">0</strong> enriched / <span id="dq-companies-total">0</span> total base</div>
-        <p class="dq-desc" style="margin-top:8px">
-          Total base = every company in your HubSpot portal, created within the selected date range
-          (not just companies with an associated contact). Enriched = <code>reasoning_company</code>
-          is filled in (not empty).
-        </p>
-
-        <div class="dq-current-title">Current situation</div>
-        <p class="dq-desc">Click a row to see any known contacts at those companies (some companies have none).</p>
-        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
-          <tbody id="dq-companies-table"></tbody>
-        </table>
-      </div>
-
       <!-- Enrichment within the Open Deal base -->
       <div class="dq-panel">
         <div class="dq-head">
@@ -488,6 +467,28 @@
         <p class="dq-desc">Click a row to see the contacts behind it.</p>
         <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
           <tbody id="dq-odenrich-table"></tbody>
+        </table>
+      </div>
+
+      <!-- Companies enrichment -->
+      <div class="dq-panel">
+        <div class="dq-head">
+          <span class="dq-icon">🏢</span>
+          <h2>Companies</h2>
+          <span class="dq-pct" id="dq-companies-pct">0%</span>
+        </div>
+        <div class="dq-bar-track"><div class="dq-bar-fill" id="dq-companies-bar" style="width:0%"></div></div>
+        <div class="dq-sub"><strong id="dq-companies-enriched">0</strong> enriched / <span id="dq-companies-total">0</span> total base</div>
+        <p class="dq-desc" style="margin-top:8px">
+          Total base = every company in your HubSpot portal, created within the selected date range
+          (not just companies with an associated contact). Enriched = <code>reasoning_company</code>
+          is filled in (not empty).
+        </p>
+
+        <div class="dq-current-title">Current situation</div>
+        <p class="dq-desc">Click a row to see any known contacts at those companies (some companies have none).</p>
+        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+          <tbody id="dq-companies-table"></tbody>
         </table>
       </div>
     </div><!-- end panel-dataquality -->
