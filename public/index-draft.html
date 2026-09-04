@@ -228,20 +228,26 @@
         <button data-range="365">1y</button>
         <button data-range="all">All</button>
       </div>
-      <label>From</label><input type="date" id="from">
-      <label>To</label><input type="date" id="to">
-      <label>Source</label>
-      <div id="source-filter-wrap" style="position:relative">
-        <button type="button" id="source-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
-          <span id="source-filter-label">All</span>
-          <span style="opacity:.5;font-size:10px">▼</span>
-        </button>
-        <div id="source-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
-          <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
-            <button type="button" id="source-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
-            <button type="button" id="source-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+      <div style="display:inline-flex;align-items:center;gap:6px">
+        <label>From</label><input type="date" id="from">
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:6px">
+        <label>To</label><input type="date" id="to">
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:6px">
+        <label>Source</label>
+        <div id="source-filter-wrap" style="position:relative">
+          <button type="button" id="source-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span id="source-filter-label">All</span>
+            <span style="opacity:.5;font-size:10px">▼</span>
+          </button>
+          <div id="source-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+            <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
+              <button type="button" id="source-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
+              <button type="button" id="source-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+            </div>
+            <div id="source-filter-options"></div>
           </div>
-          <div id="source-filter-options"></div>
         </div>
       </div>
       <button type="button" id="export-btn" title="Download the currently-filtered leads as a CSV file" style="margin-left:auto;border:1px solid var(--line);padding:6px 12px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);cursor:pointer;display:inline-flex;align-items:center;gap:6px">
@@ -372,53 +378,63 @@
           <button data-range="365">1y</button>
           <button data-range="all" class="active">All</button>
         </div>
-        <label>From</label><input type="date" id="dq-from">
-        <label>To</label><input type="date" id="dq-to">
-        <label>Status</label>
-        <div id="dq-status-filter-wrap" style="position:relative">
-          <button type="button" id="dq-status-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
-            <span id="dq-status-filter-label">All</span>
-            <span style="opacity:.5;font-size:10px">▼</span>
-          </button>
-          <div id="dq-status-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
-            <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
-              <button type="button" id="dq-status-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
-              <button type="button" id="dq-status-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
-            </div>
-            <div id="dq-status-filter-options"></div>
-          </div>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label>From</label><input type="date" id="dq-from">
         </div>
-        <label>Marketing contact</label>
-        <div id="dq-marketing-filter-wrap" style="position:relative">
-          <button type="button" id="dq-marketing-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
-            <span id="dq-marketing-filter-label">All</span>
-            <span style="opacity:.5;font-size:10px">▼</span>
-          </button>
-          <div id="dq-marketing-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:200px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
-            <div id="dq-marketing-filter-options">
-              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
-                <input type="checkbox" value="yes" checked><span>Marketing contact</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
-                <input type="checkbox" value="no" checked><span>Not marketing contact</span>
-              </label>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label>To</label><input type="date" id="dq-to">
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label>Status</label>
+          <div id="dq-status-filter-wrap" style="position:relative">
+            <button type="button" id="dq-status-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span id="dq-status-filter-label">All</span>
+              <span style="opacity:.5;font-size:10px">▼</span>
+            </button>
+            <div id="dq-status-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;max-height:280px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+              <div style="display:flex;gap:6px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px">
+                <button type="button" id="dq-status-filter-all" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Select all</button>
+                <button type="button" id="dq-status-filter-none" style="flex:1;font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);cursor:pointer">Clear</button>
+              </div>
+              <div id="dq-status-filter-options"></div>
             </div>
           </div>
         </div>
-        <label title="Contacts with no firstname/lastname on file usually can't be enriched at all — only an email to go on.">Full name</label>
-        <div id="dq-fullname-filter-wrap" style="position:relative">
-          <button type="button" id="dq-fullname-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
-            <span id="dq-fullname-filter-label">All</span>
-            <span style="opacity:.5;font-size:10px">▼</span>
-          </button>
-          <div id="dq-fullname-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
-            <div id="dq-fullname-filter-options">
-              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
-                <input type="checkbox" value="yes" checked><span>Has full name</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
-                <input type="checkbox" value="no" checked><span>No full name (email only)</span>
-              </label>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label>Marketing contact</label>
+          <div id="dq-marketing-filter-wrap" style="position:relative">
+            <button type="button" id="dq-marketing-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span id="dq-marketing-filter-label">All</span>
+              <span style="opacity:.5;font-size:10px">▼</span>
+            </button>
+            <div id="dq-marketing-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:200px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+              <div id="dq-marketing-filter-options">
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="yes" checked><span>Marketing contact</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="no" checked><span>Not marketing contact</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label title="Contacts with no firstname/lastname on file usually can't be enriched at all — only an email to go on.">Full name</label>
+          <div id="dq-fullname-filter-wrap" style="position:relative">
+            <button type="button" id="dq-fullname-filter-btn" style="border:1px solid var(--line);padding:6px 10px;border-radius:6px;font:inherit;font-size:13px;background:var(--panel);min-width:160px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span id="dq-fullname-filter-label">All</span>
+              <span style="opacity:.5;font-size:10px">▼</span>
+            </button>
+            <div id="dq-fullname-filter-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px;min-width:220px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+              <div id="dq-fullname-filter-options">
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="yes" checked><span>Has full name</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;padding:5px 6px;cursor:pointer;font-size:13px;border-radius:4px">
+                  <input type="checkbox" value="no" checked><span>No full name (email only)</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
