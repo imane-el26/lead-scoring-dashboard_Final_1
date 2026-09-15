@@ -169,7 +169,7 @@
     main, header { padding: 16px; }
   }
 
-  /* Data quality tab */
+  /* Enrichment Quality tab */
   .dq-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
               padding: 20px; margin-bottom: 16px; }
   .dq-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
@@ -186,6 +186,20 @@
                        color: var(--muted); margin: 20px 0 8px; padding-top: 16px;
                        border-top: 1px solid var(--line); }
   .dq-desc { font-size: 12px; color: var(--muted); margin: -4px 0 12px; }
+  .dq-refreshed { font-size: 12px; color: var(--muted); margin: -4px 0 16px; }
+  .dq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dq-grid .dq-panel { margin-bottom: 0; }
+  @media (max-width: 720px) { .dq-grid { grid-template-columns: 1fr; } }
+
+  /* Duplicate cluster modal (Duplicate Contacts / Duplicate Companies) */
+  .dq-cluster { margin-bottom: 22px; }
+  .dq-cluster:last-child { margin-bottom: 0; }
+  .dq-cluster-head { font-size: 12px; font-weight: 600; color: var(--muted);
+                      text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 6px; }
+  /* The row right after a duplicate pair, spelling out why they matched. */
+  .dq-reason-row td { background: #fffbeb; border-bottom: 2px solid var(--line); }
+  .dq-newest-badge { display: inline-block; padding: 1px 7px; border-radius: 999px;
+                      background: #ecfdf5; color: #16a34a; font-weight: 600; font-size: 11px; }
 
   /* Manual QA — LinkedIn URL Quality (static, hand-audited data) */
   .qa-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
@@ -214,8 +228,9 @@
   <div id="content" style="display:none">
     <div class="tabs">
       <button id="tab-dashboard" class="active" onclick="switchTab('dashboard')">Lead Analytics</button>
-      <button id="tab-dataquality" onclick="switchTab('dataquality')">Data Quality</button>
+      <button id="tab-dataquality" onclick="switchTab('dataquality')">Enrichment Quality</button>
       <button id="tab-simulator" onclick="switchTab('simulator')">Scoring simulator</button>
+      <button id="tab-crmquality" onclick="switchTab('crmquality')">CRM Quality</button>
     </div>
 
     <!-- ========== DASHBOARD TAB ========== -->
@@ -300,7 +315,7 @@
     </div>
     </div><!-- end panel-dashboard -->
 
-    <!-- ========== DATA QUALITY TAB ========== -->
+    <!-- ========== ENRICHMENT QUALITY TAB (id: dataquality) ========== -->
     <div id="panel-dataquality" class="tab-panel">
 
       <!-- Manual QA — LinkedIn URL Quality. Static, hand-audited data (NOT
@@ -674,6 +689,177 @@
         </section>
       </div>
     </div><!-- end panel-simulator -->
+
+    <!-- ========== CRM QUALITY TAB ========== -->
+    <div id="panel-crmquality" class="tab-panel">
+      <div class="filters" style="margin-bottom:20px">
+        <div class="group" id="cq-presets">
+          <button data-range="7">7d</button>
+          <button data-range="30">30d</button>
+          <button data-range="90">90d</button>
+          <button data-range="365">1y</button>
+          <button data-range="all" class="active">All</button>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label>From</label><input type="date" id="cq-from">
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <label>To</label><input type="date" id="cq-to">
+        </div>
+      </div>
+
+      <h2 style="margin:0 0 12px 0;font-size:16px;font-weight:700;color:var(--ink)">Contacts</h2>
+
+      <div class="dq-grid" style="margin-bottom:16px">
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">🪪</span>
+            <h2>Missing Name</h2>
+            <span class="dq-pct" id="cq-cname-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-cname-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-cname-count">0</strong> missing name / <span id="cq-cname-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see the contacts behind it.</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-cname-table"></tbody>
+          </table>
+        </div>
+
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">☎️</span>
+            <h2>Missing Phone Number</h2>
+            <span class="dq-pct" id="cq-cphone-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-cphone-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-cphone-count">0</strong> missing phone / <span id="cq-cphone-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see the contacts behind it.</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-cphone-table"></tbody>
+          </table>
+        </div>
+
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">✉️</span>
+            <h2>Missing Email</h2>
+            <span class="dq-pct" id="cq-cemail-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-cemail-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-cemail-count">0</strong> missing email / <span id="cq-cemail-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see the contacts behind it.</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-cemail-table"></tbody>
+          </table>
+        </div>
+
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">🔗</span>
+            <h2>Missing LinkedIn URL</h2>
+            <span class="dq-pct" id="cq-clinkedin-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-clinkedin-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-clinkedin-count">0</strong> missing LinkedIn / <span id="cq-clinkedin-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see the contacts behind it.</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-clinkedin-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dq-panel">
+        <div class="dq-head">
+          <span class="dq-icon">👯</span>
+          <h2>Duplicate Contacts</h2>
+          <span class="dq-pct" id="cq-cdup-pct">0%</span>
+        </div>
+        <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-cdup-bar" style="width:0%"></div></div>
+        <div class="dq-sub"><strong id="cq-cdup-count">0</strong> flagged as duplicate / <span id="cq-cdup-total">0</span> total base</div>
+
+        <div class="dq-current-title">Current situation</div>
+        <p class="dq-desc">Click a row to see the contacts behind it.</p>
+        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+          <tbody id="cq-cdup-table"></tbody>
+        </table>
+      </div>
+
+      <h2 style="margin:24px 0 12px 0;font-size:16px;font-weight:700;color:var(--ink)">Companies</h2>
+
+      <div class="dq-grid" style="margin-bottom:16px">
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">🏢</span>
+            <h2>Missing Name</h2>
+            <span class="dq-pct" id="cq-oname-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-oname-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-oname-count">0</strong> missing name / <span id="cq-oname-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see any known contacts at those companies (some have none).</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-oname-table"></tbody>
+          </table>
+        </div>
+
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">🌐</span>
+            <h2>Missing Domain</h2>
+            <span class="dq-pct" id="cq-odomain-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-odomain-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-odomain-count">0</strong> missing domain / <span id="cq-odomain-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see any known contacts at those companies (some have none).</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-odomain-table"></tbody>
+          </table>
+        </div>
+
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">🔗</span>
+            <h2>Missing Company LinkedIn</h2>
+            <span class="dq-pct" id="cq-olinkedin-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-olinkedin-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-olinkedin-count">0</strong> missing LinkedIn / <span id="cq-olinkedin-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see any known contacts at those companies (some have none).</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-olinkedin-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dq-panel">
+        <div class="dq-head">
+          <span class="dq-icon">👯</span>
+          <h2>Duplicate Companies</h2>
+          <span class="dq-pct" id="cq-odup-pct">0%</span>
+        </div>
+        <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-odup-bar" style="width:0%"></div></div>
+        <div class="dq-sub"><strong id="cq-odup-count">0</strong> flagged as duplicate / <span id="cq-odup-total">0</span> total base</div>
+
+        <div class="dq-current-title">Current situation</div>
+        <p class="dq-desc">Click a row to see any known contacts at those companies (some have none).</p>
+        <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+          <tbody id="cq-odup-table"></tbody>
+        </table>
+      </div>
+    </div><!-- end panel-crmquality -->
   </div>
 </main>
 
@@ -717,6 +903,7 @@ const LIFECYCLE_LABELS = {
 
 let LEADS = [];
 let COMPANIES = [];
+let COMPANIES_BY_ID = new Map();
 let PORTAL_ID = '';
 let charts = {};
 
@@ -1407,7 +1594,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
 let modalContacts = [];
 let modalExportContacts = [];
 // Which kind of records the modal is currently showing — 'contacts' (the
-// default) or 'companies' (see showCompanies(), used by the Data quality
+// default) or 'companies' (see showCompanies(), used by the Enrichment Quality
 // tab's Companies panel). Controls what the Export button downloads.
 let modalMode = 'contacts';
 let modalCompanies = [];
@@ -1548,7 +1735,7 @@ function showContacts(title, contacts, exportContacts) {
   document.getElementById('modal').classList.add('open');
 }
 
-// Company-record modal — used by the Data quality tab's Companies panel.
+// Company-record modal — used by the Enrichment Quality tab's Companies panel.
 // Separate from showContacts() because companies have entirely different
 // columns (name, Type d'acteur...) and most have zero associated contacts,
 // so the contacts table would be empty/irrelevant for them.
@@ -1906,10 +2093,13 @@ function switchTab(name) {
   if (name === 'dataquality') {
     renderDataQuality();
   }
+  if (name === 'crmquality') {
+    renderCRMQuality();
+  }
 }
 
 // ============================================================
-// DATA QUALITY TAB
+// ENRICHMENT QUALITY TAB (internal id/prefix: dataquality / dq-*)
 // ============================================================
 // Has its own date range (independent from the Dashboard tab's filters),
 // with the same 7d/30d/90d/1y/All presets. Defaults to All.
@@ -1928,7 +2118,7 @@ function hasFullName(l) {
 }
 
 // Date range + Status + Marketing contact + Full name all apply tab-wide, to
-// both the Contacts panel and the Data quality — Open Deal contacts panel.
+// both the Contacts panel and the Enrichment Quality — Open Deal contacts panel.
 function getDQFiltered() {
   const from = parseDate(document.getElementById('dq-from').value);
   const to   = parseDate(document.getElementById('dq-to').value);
@@ -2201,6 +2391,644 @@ function renderDataQuality() {
   renderDQContacts(filtered);
   renderDQCompanies();
   renderDQOpenDealEnrichment(filtered);
+}
+
+// ============================================================
+// CRM QUALITY TAB
+// ============================================================
+// Snapshot over the entire dataset — no date filter (this tracks current
+// CRM hygiene, not a time-boxed trend). Duplicate detection runs once and
+// is cached (see getDuplicateContacts/getDuplicateCompanies) since neither
+// LEADS nor COMPANIES change after load.
+
+// --- Levenshtein similarity, for fuzzy name matching ---
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  const al = a.length, bl = b.length;
+  if (al === 0) return bl;
+  if (bl === 0) return al;
+  let prev = new Array(bl + 1);
+  for (let j = 0; j <= bl; j++) prev[j] = j;
+  for (let i = 1; i <= al; i++) {
+    const curr = new Array(bl + 1);
+    curr[0] = i;
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    prev = curr;
+  }
+  return prev[bl];
+}
+function nameSimilarity(a, b) {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 1;
+  return 1 - levenshteinDistance(a, b) / maxLen;
+}
+const FUZZY_NAME_THRESHOLD = 0.8;
+// Blocking key for fuzzy-name bucketing: the first few characters of the
+// name with ALL spaces removed, not just the first word. Bucketing by
+// first word alone missed cases like "Mickael Jackson" vs "MickaelJackson"
+// (a run-together name with no separator at all) — different first "word"
+// entirely, so they'd never even be compared, even though nameSimilarity()
+// would readily recognize them as a near-match once actually compared.
+function nameBucketKey(normalizedName) {
+  return normalizedName.replace(/\s+/g, '').slice(0, 4);
+}
+// Cheap upper-bound check to skip the full O(len*len) Levenshtein scan for
+// pairs that can't possibly reach the threshold: edit distance is always
+// >= the difference in length, so if that alone already pushes similarity
+// below the threshold there's no need to run the real comparison. Run
+// before nameSimilarity() inside every bucketed pairwise loop — with
+// buckets holding names of very different lengths (they only share a
+// 4-char prefix), this prunes out a large share of the comparisons.
+function couldMeetNameThreshold(a, b) {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return true;
+  return (1 - Math.abs(a.length - b.length) / maxLen) >= FUZZY_NAME_THRESHOLD;
+}
+
+// Hyphens and apostrophes are word separators, not noise — "Mickael-Jackson"
+// and "Mickael Jackson" (or "O'Brien" / "O Brien") should normalize to the
+// same thing. Stripping them outright instead of turning them into spaces
+// (as this used to do) glued the two words together into one — different
+// enough from the space-separated spelling that neither the exact-tier
+// "same name" bucketing nor the fuzzy first-word bucketing ever saw them as
+// a match.
+function normalizeName(s) {
+  return String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[-']/g, ' ')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+const COMPANY_SUFFIX_RE = /\b(sarl|sas|sasu|sa|inc|llc|ltd|gmbh|corp|corporation|co)\b/g;
+function normalizeCompanyName(s) {
+  return normalizeName(s).replace(COMPANY_SUFFIX_RE, '').replace(/\s+/g, ' ').trim();
+}
+function normalizeDomain(s) {
+  return String(s || '').toLowerCase().trim()
+    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+}
+// Digits-only, keeping just the last 9 digits so "+33 6 29 60 60 79" and
+// "06 29 60 60 79" normalize to the same key (French numbers: trunk '0' vs
+// country code '33' differ only in what precedes the 9-digit subscriber
+// number). Numbers too short to be a real phone number are dropped so they
+// don't spuriously collide with each other.
+function normalizePhone(s) {
+  const digits = String(s || '').replace(/\D/g, '');
+  if (digits.length < 6) return '';
+  return digits.length > 9 ? digits.slice(-9) : digits;
+}
+// French landlines (01–05 / +33 1–5) are routinely shared — a company
+// switchboard, a shared office line — so two contacts having the "same
+// phone number" there is common and NOT a sign they're the same person.
+// French mobiles (06/07, +33 6/33 7) are personal, so only those are
+// trustworthy enough to use as a duplicate signal. After normalizePhone()
+// reduces a number to its last 9 digits, a mobile's subscriber number
+// always starts with 6 or 7.
+function isLikelyMobilePhone(normalizedPhone) {
+  return /^[67]/.test(normalizedPhone);
+}
+function normalizeUrl(s) {
+  return String(s || '').toLowerCase().trim()
+    .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
+}
+
+function contactMissingName(l) { return !hasFullName(l); }
+function contactMissingPhone(l) { return !(l.phone && String(l.phone).trim()); }
+function contactMissingEmail(l) { return !(l.email && String(l.email).trim()); }
+
+// The LinkedIn lookup can genuinely fail (e.g. "Not found" / "Pas trouvé" /
+// "Confiance insuffisante" / "Erreur") — those tokens, and a truly empty
+// field, are the only cases that count as "missing". Anything else is a
+// real result even when it isn't a well-formed https:// URL (a handful of
+// records store it as a bare "linkedin.com/in/..." path with no scheme) —
+// those must NOT be counted as missing just because they don't match a URL
+// regex.
+function isNotFoundPlaceholder(s) {
+  const norm = String(s || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return norm === '' || ['not found', 'pas trouve', 'confiance insuffisante', 'erreur', 'error'].includes(norm);
+}
+function contactHasValidLinkedin(l) {
+  return !isNotFoundPlaceholder((l.quality || {}).lemlistlinkedinurl);
+}
+function contactMissingLinkedin(l) { return !contactHasValidLinkedin(l); }
+function companyMissingName(c) { return !hasCompanyName(c); }
+function companyMissingDomain(c) { return !(c.domain && String(c.domain).trim()); }
+function companyHasValidLinkedin(c) {
+  return !isNotFoundPlaceholder(c.linkedin_company_page);
+}
+function companyMissingLinkedin(c) { return !companyHasValidLinkedin(c); }
+
+// Corroborating-signal comparators — named and hoisted (rather than inline
+// closures inside getDuplicateContacts/getDuplicateCompanies) so the
+// duplicate-cluster modal can reuse them to explain *why* two records were
+// matched, not just recompute the same membership test.
+function contactSameName(a, b) {
+  const na = normalizeName((a.firstname || '') + ' ' + (a.lastname || ''));
+  const nb = normalizeName((b.firstname || '') + ' ' + (b.lastname || ''));
+  return !!na && na === nb;
+}
+function contactSameEmail(a, b) {
+  const ea = (a.email || '').trim().toLowerCase(), eb = (b.email || '').trim().toLowerCase();
+  return !!ea && ea === eb;
+}
+// Mobile-only — see isLikelyMobilePhone() above for why landlines are excluded.
+function contactSamePhone(a, b) {
+  const pa = normalizePhone(a.phone), pb = normalizePhone(b.phone);
+  return !!pa && pa === pb && isLikelyMobilePhone(pa);
+}
+function contactSameCompany(a, b) {
+  return !!(a.companyId && b.companyId && a.companyId === b.companyId);
+}
+function companySameName(a, b) {
+  const na = normalizeCompanyName(a.name), nb = normalizeCompanyName(b.name);
+  return !!na && na === nb;
+}
+function companySameDomain(a, b) {
+  const da = normalizeDomain(a.domain), db = normalizeDomain(b.domain);
+  return !!da && da === db;
+}
+function companySameLinkedin(a, b) {
+  if (!companyHasValidLinkedin(a) || !companyHasValidLinkedin(b)) return false;
+  const ua = normalizeUrl(a.linkedin_company_page), ub = normalizeUrl(b.linkedin_company_page);
+  return !!ua && ua === ub;
+}
+
+// Union-find (disjoint set) used to group records into duplicate clusters —
+// a record can be linked to others via several different edges (same email,
+// same phone, a fuzzy name match, ...) and all of those end up in one
+// cluster rather than one Set per edge type.
+class UnionFind {
+  constructor() { this.parent = new Map(); }
+  find(x) {
+    if (!this.parent.has(x)) this.parent.set(x, x);
+    let root = x;
+    while (this.parent.get(root) !== root) root = this.parent.get(root);
+    let cur = x;
+    while (this.parent.get(cur) !== root) {
+      const next = this.parent.get(cur);
+      this.parent.set(cur, root);
+      cur = next;
+    }
+    return root;
+  }
+  union(a, b) {
+    const ra = this.find(a), rb = this.find(b);
+    if (ra !== rb) this.parent.set(ra, rb);
+  }
+}
+
+// Groups too large to be plausible duplicates of each other (e.g. every
+// contact sharing a generic "contact@company.com" inbox) — treated as
+// noise rather than real matches.
+const DEDUP_GROUP_SIZE_GUARD = 50;
+
+// Unions a pair within a group only when `corroborate(a, b)` also holds —
+// for signals where sharing the group key (e.g. same full name) is
+// necessary but not sufficient on its own.
+function unionCorroboratedPairs(uf, groups, corroborate, resultMembers) {
+  groups.forEach(group => {
+    if (group.length < 2 || group.length > DEDUP_GROUP_SIZE_GUARD) return;
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        if (corroborate(group[i], group[j])) {
+          uf.union(group[i], group[j]);
+          resultMembers.add(group[i]); resultMembers.add(group[j]);
+        }
+      }
+    }
+  });
+}
+
+function buildClusters(uf, involved) {
+  const clusters = new Map();
+  involved.forEach(x => {
+    const root = uf.find(x);
+    if (!clusters.has(root)) clusters.set(root, []);
+    clusters.get(root).push(x);
+  });
+  return [...clusters.values()].filter(members => members.length > 1);
+}
+
+// Exact tier = same full name, AND at least one corroborating signal also
+// matches (same email, same *mobile* phone, or same company) — the full
+// name alone is never enough (too many unrelated namesakes to be "exact"),
+// and email/phone/company alone isn't enough either; both together is what
+// counts as an exact match duplicate here. Landline numbers are excluded
+// from phone matching entirely (see isLikelyMobilePhone) since they're
+// routinely a shared company switchboard, not a personal identifier.
+//
+// Fuzzy tier mirrors the exact tier's shape, one notch looser: a
+// near-identical (not necessarily exact) full name (>= 80% similarity),
+// AND THEN at least one of email / company also matching — same
+// corroboration fields as the exact tier, minus phone (phone is never a
+// fuzzy signal — see the exact-tier note above). Name pairs are bucketed by
+// nameBucketKey() (see above) to keep the O(n^2) similarity scan tractable
+// across ~50k contacts, the same approach used for companies below. A pair
+// already caught by the exact tier is excluded from the fuzzy count.
+// Contacts with no name never enter either tier.
+//
+// Takes the (possibly date-filtered) population to scan rather than reading
+// LEADS directly, and recomputes on every call — the CRM Quality tab's date
+// filter means the result depends on which contacts are in scope, so a
+// single module-level cache would go stale the moment the filter changes.
+function getDuplicateContacts(population) {
+  const uf = new UnionFind();
+  const exactMembers = new Set();
+  const fuzzyMembers = new Set();
+
+  const byName = new Map();
+  population.forEach(l => {
+    const name = normalizeName((l.firstname || '') + ' ' + (l.lastname || ''));
+    if (!name) return;
+    if (!byName.has(name)) byName.set(name, []);
+    byName.get(name).push(l);
+  });
+  unionCorroboratedPairs(uf, [...byName.values()],
+    (a, b) => contactSameEmail(a, b) || contactSamePhone(a, b) || contactSameCompany(a, b),
+    exactMembers);
+
+  const byNamePrefix = new Map();
+  population.forEach(l => {
+    const n = normalizeName((l.firstname || '') + ' ' + (l.lastname || ''));
+    const key = nameBucketKey(n);
+    if (!key) return;
+    if (!byNamePrefix.has(key)) byNamePrefix.set(key, []);
+    byNamePrefix.get(key).push({ l, n });
+  });
+  byNamePrefix.forEach(group => {
+    if (group.length < 2 || group.length > 300) return;  // guard against a common name prefix creating a huge bucket
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const a = group[i].l, b = group[j].l;
+        // Cheapest, most-selective checks first — most pairs fail the
+        // corroboration check, so the expensive Levenshtein scan
+        // (nameSimilarity) only ever runs on pairs that already passed it.
+        if ((contactSameEmail(a, b) || contactSameCompany(a, b)) &&
+            couldMeetNameThreshold(group[i].n, group[j].n) &&
+            nameSimilarity(group[i].n, group[j].n) >= FUZZY_NAME_THRESHOLD) {
+          uf.union(a, b);
+          fuzzyMembers.add(a); fuzzyMembers.add(b);
+        }
+      }
+    }
+  });
+  const fuzzyOnly = [...fuzzyMembers].filter(l => !exactMembers.has(l));
+
+  const involved = new Set([...exactMembers, ...fuzzyMembers]);
+  const clusters = buildClusters(uf, involved).map(members => ({
+    tier: members.some(m => exactMembers.has(m)) ? 'exact' : 'fuzzy',
+    members,
+  }));
+
+  return { exact: [...exactMembers], fuzzy: fuzzyOnly, all: [...involved], clusters };
+}
+
+// Exact tier = same normalized company name, AND at least one corroborating
+// signal also matches (same domain, or same LinkedIn company page) — the
+// name alone is never enough, mirroring the contacts rule above.
+//
+// Fuzzy tier mirrors the exact tier, one notch looser: a near-identical (not
+// necessarily exact) name (>= 80% similarity), AND THEN at least one of
+// domain / LinkedIn page also matching — same corroboration fields as the
+// exact tier. Name pairs are bucketed by nameBucketKey() (see above) to
+// keep the O(n^2) similarity scan tractable across 30k+ companies.
+//
+// Takes the (possibly date-filtered) population to scan rather than reading
+// COMPANIES directly — see getDuplicateContacts() above for why this isn't
+// cached.
+function getDuplicateCompanies(population) {
+  const uf = new UnionFind();
+  const exactMembers = new Set();
+  const fuzzyMembers = new Set();
+
+  const byName = new Map();
+  population.forEach(c => {
+    const n = normalizeCompanyName(c.name);
+    if (!n) return;
+    if (!byName.has(n)) byName.set(n, []);
+    byName.get(n).push(c);
+  });
+  unionCorroboratedPairs(uf, [...byName.values()],
+    (a, b) => companySameDomain(a, b) || companySameLinkedin(a, b),
+    exactMembers);
+
+  const byNamePrefix = new Map();
+  population.forEach(c => {
+    const n = normalizeCompanyName(c.name);
+    const key = nameBucketKey(n);
+    if (!key) return;
+    if (!byNamePrefix.has(key)) byNamePrefix.set(key, []);
+    byNamePrefix.get(key).push({ c, n });
+  });
+  byNamePrefix.forEach(group => {
+    if (group.length < 2 || group.length > 300) return;  // guard against a common name prefix (e.g. "groupe") creating a huge bucket
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const a = group[i].c, b = group[j].c;
+        // Cheapest, most-selective checks first — see the contacts version
+        // of this loop above for why.
+        if ((companySameDomain(a, b) || companySameLinkedin(a, b)) &&
+            couldMeetNameThreshold(group[i].n, group[j].n) &&
+            nameSimilarity(group[i].n, group[j].n) >= FUZZY_NAME_THRESHOLD) {
+          uf.union(a, b);
+          fuzzyMembers.add(a); fuzzyMembers.add(b);
+        }
+      }
+    }
+  });
+  const fuzzyOnly = [...fuzzyMembers].filter(c => !exactMembers.has(c));
+
+  const involved = new Set([...exactMembers, ...fuzzyMembers]);
+  const clusters = buildClusters(uf, involved).map(members => ({
+    tier: members.some(m => exactMembers.has(m)) ? 'exact' : 'fuzzy',
+    members,
+  }));
+
+  return { exact: [...exactMembers], fuzzy: fuzzyOnly, all: [...involved], clusters };
+}
+
+// Consistent "reference" record for a cluster (lowest id) so which record
+// the rest of the cluster is compared against is stable across re-renders
+// rather than depending on iteration order.
+function clusterAnchor(members) {
+  return [...members].sort((a, b) => String(a.id || '').localeCompare(String(b.id || '')))[0];
+}
+
+// Plain-language list of why two records were paired, reusing the exact
+// comparator functions that built the cluster in the first place (so this
+// can never say something the matching logic didn't actually check) plus
+// the fuzzy name-similarity score when the names aren't identical.
+function matchReasons(mode, a, b) {
+  const reasons = [];
+  if (mode === 'companies') {
+    if (companySameName(a, b)) {
+      reasons.push('same name');
+    } else {
+      const sim = nameSimilarity(normalizeCompanyName(a.name), normalizeCompanyName(b.name));
+      if (sim >= FUZZY_NAME_THRESHOLD) reasons.push('similar name (' + Math.round(sim * 100) + '%)');
+    }
+    if (companySameDomain(a, b)) reasons.push('same domain');
+    if (companySameLinkedin(a, b)) reasons.push('same LinkedIn page');
+  } else {
+    if (contactSameName(a, b)) {
+      reasons.push('same name');
+    } else {
+      const na = normalizeName((a.firstname || '') + ' ' + (a.lastname || ''));
+      const nb = normalizeName((b.firstname || '') + ' ' + (b.lastname || ''));
+      const sim = (na && nb) ? nameSimilarity(na, nb) : 0;
+      if (sim >= FUZZY_NAME_THRESHOLD) reasons.push('similar name (' + Math.round(sim * 100) + '%)');
+    }
+    if (contactSameEmail(a, b)) reasons.push('same email');
+    if (contactSamePhone(a, b)) reasons.push('same mobile number');
+    if (contactSameCompany(a, b)) reasons.push('same company');
+  }
+  return reasons;
+}
+
+// isNewest flags the most-recently-created record in the cluster with a
+// badge, so it's obvious at a glance which record is "the new one" when
+// deciding which to keep.
+function createdCellHtml(m, isNewest) {
+  const created = m.createdDate ? fmtDate(m.createdDate) : '—';
+  return created + (isNewest ? ' <span class="dq-newest-badge">Newest</span>' : '');
+}
+// Same HubSpot record-link pattern used by showContacts()/showCompanies()
+// (0-1 = contact, 0-2 = company object type), so every record shown in the
+// duplicate-cluster comparison links straight to that record in HubSpot.
+function hubspotRecordUrl(objectTypeId, id) {
+  return (PORTAL_ID && id)
+    ? 'https://app.hubspot.com/contacts/' + PORTAL_ID + '/record/' + objectTypeId + '/' + encodeURIComponent(id)
+    : null;
+}
+function hubspotLinkCell(objectTypeId, id, label) {
+  const url = hubspotRecordUrl(objectTypeId, id);
+  return url
+    ? '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:500">' + label + ' ↗</a>'
+    : label;
+}
+function contactRowHtml(m, isNewest) {
+  const name = ((m.firstname || '') + ' ' + (m.lastname || '')).trim() || '—';
+  const company = m.companyId ? COMPANIES_BY_ID.get(m.companyId) : null;
+  return '<tr>' +
+    '<td>' + hubspotLinkCell('0-1', m.id, esc(name)) + '</td>' +
+    '<td>' + (esc(m.email) || '—') + '</td>' +
+    '<td>' + (esc(m.phone) || '—') + '</td>' +
+    '<td>' + (company ? esc(company.name) : '—') + '</td>' +
+    '<td>' + createdCellHtml(m, isNewest) + '</td>' +
+  '</tr>';
+}
+function companyRowHtml(m, isNewest) {
+  const linkedin = companyHasValidLinkedin(m)
+    ? '<a href="' + esc(m.linkedin_company_page) + '" target="_blank" rel="noopener">↗ LinkedIn</a>'
+    : '—';
+  return '<tr>' +
+    '<td>' + hubspotLinkCell('0-2', m.id, esc(m.name) || '(no name)') + '</td>' +
+    '<td>' + (esc(m.domain) || '—') + '</td>' +
+    '<td>' + linkedin + '</td>' +
+    '<td>' + createdCellHtml(m, isNewest) + '</td>' +
+  '</tr>';
+}
+
+// Renders the duplicate-cluster comparison modal (Duplicate Contacts /
+// Duplicate Companies → "Exact match duplicates" / "Fuzzy name duplicates"
+// rows). Each cluster is shown as a stack of pairs: the anchor record's row,
+// then for every other record in the group — its row, immediately followed
+// by a bold line spelling out what matched it to the anchor. No numeric
+// similarity score; the reason line says the actual thing that matched.
+function showDuplicateClusters(title, clusters, mode) {
+  const isCompanies = mode === 'companies';
+  modalMode = isCompanies ? 'companies' : 'contacts';
+  const allMembers = clusters.flatMap(c => c.members);
+  if (isCompanies) { modalCompanies = allMembers; } else { modalContacts = allMembers; modalExportContacts = allMembers; }
+
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-count').textContent =
+    ' — ' + clusters.length.toLocaleString() + ' duplicate group' + (clusters.length === 1 ? '' : 's') +
+    ' (' + allMembers.length.toLocaleString() + ' record' + (allMembers.length === 1 ? '' : 's') + ')';
+  const expBtn = document.getElementById('modal-export');
+  if (expBtn) {
+    expBtn.title = 'Export all ' + allMembers.length + ' record' + (allMembers.length === 1 ? '' : 's') +
+      ' across ' + clusters.length + ' duplicate group' + (clusters.length === 1 ? '' : 's') + ' as CSV';
+  }
+
+  const body = document.getElementById('modal-body');
+  if (!clusters.length) {
+    body.innerHTML = '<div class="empty-mini">No duplicate groups in this segment.</div>';
+    document.getElementById('modal').classList.add('open');
+    return;
+  }
+
+  const rowHtml = isCompanies ? companyRowHtml : contactRowHtml;
+  const colCount = isCompanies ? 4 : 5;
+  const headCols = isCompanies
+    ? '<th>Name</th><th>Domain</th><th>LinkedIn</th><th>Created</th>'
+    : '<th>Name</th><th>Email</th><th>Phone number</th><th>Company</th><th>Created</th>';
+
+  const sorted = [...clusters].sort((a, b) => b.members.length - a.members.length);
+  body.innerHTML = sorted.map((cluster, idx) => {
+    const anchor = clusterAnchor(cluster.members);
+    const others = cluster.members.filter(m => m !== anchor);
+    const newest = cluster.members.reduce(
+      (best, m) => (!best || (m.createdDate && m.createdDate > best.createdDate)) ? m : best, null);
+
+    const rows = rowHtml(anchor, anchor === newest) + others.map(m => {
+      const reasons = matchReasons(mode, anchor, m);
+      const reasonText = reasons.length ? reasons.join(', ') : 'possible duplicate';
+      return rowHtml(m, m === newest) +
+        '<tr class="dq-reason-row"><td colspan="' + colCount + '"><strong>Matched on: ' + esc(reasonText) + '</strong></td></tr>';
+    }).join('');
+
+    return '<div class="dq-cluster">' +
+      '<div class="dq-cluster-head">Group ' + (idx + 1) + ' · ' + cluster.members.length + ' records · ' +
+        (cluster.tier === 'exact' ? 'Exact match' : 'Fuzzy match') + '</div>' +
+      '<table><thead><tr>' + headCols + '</tr></thead><tbody>' + rows + '</tbody></table>' +
+    '</div>';
+  }).join('');
+  document.getElementById('modal').classList.add('open');
+}
+
+// Renders a "missing field" panel: headline = count missing (the problem),
+// breakdown table lists both sides for click-through.
+function renderCQMissingField(prefix, population, missingFn, missingLabel, presentLabel, mode) {
+  const total = population.length;
+  const missing = population.filter(missingFn);
+  const present = population.filter(x => !missingFn(x));
+  renderDQStat(prefix, missing.length, total);
+  document.getElementById(prefix + '-count').textContent = missing.length.toLocaleString();
+  renderDQTable(prefix + '-table', [
+    { label: missingLabel, contacts: missing },
+    { label: presentLabel, contacts: present },
+  ], mode);
+}
+
+// Like renderDQTable, but "Exact match duplicates" / "Fuzzy name
+// duplicates" rows open the cluster comparison modal (showDuplicateClusters)
+// instead of a flat contact/company list, since those rows are groups of
+// records that look alike, not just a segment — "Unique" still opens the
+// regular flat list.
+function renderCQDuplicates(prefix, population, dupResult, mode) {
+  const total = population.length;
+  const dupIds = new Set(dupResult.all);
+  const unique = population.filter(x => !dupIds.has(x));
+  renderDQStat(prefix, dupResult.all.length, total);
+  document.getElementById(prefix + '-count').textContent = dupResult.all.length.toLocaleString();
+
+  const rows = [
+    { label: 'Exact match duplicates', contacts: dupResult.exact, clusters: dupResult.clusters.filter(g => g.tier === 'exact') },
+    { label: 'Fuzzy name duplicates',  contacts: dupResult.fuzzy, clusters: dupResult.clusters.filter(g => g.tier === 'fuzzy') },
+    { label: 'Unique',                 contacts: unique,          clusters: null },
+  ];
+  const totalRows = rows.reduce((s, r) => s + r.contacts.length, 0);
+  const tbody = document.getElementById(prefix + '-table');
+  tbody.innerHTML = rows.map((r, i) => {
+    const pct = totalRows ? (r.contacts.length / totalRows * 100) : 0;
+    return '<tr class="clickable" data-idx="' + i + '">' +
+      '<td>' + esc(r.label) + '</td>' +
+      '<td>' + r.contacts.length.toLocaleString() + '</td>' +
+      '<td>' + pct.toFixed(1) + '%</td></tr>';
+  }).join('');
+  tbody.querySelectorAll('tr.clickable').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const r = rows[Number(tr.dataset.idx)];
+      if (r.clusters) {
+        showDuplicateClusters(r.label, r.clusters, mode);
+      } else {
+        (mode === 'companies' ? showCompanies : showContacts)(r.label, r.contacts);
+      }
+    });
+  });
+}
+
+// Contacts/companies created within the CRM Quality tab's own date range —
+// same 7d/30d/90d/1y/All presets as the Enrichment Quality tab, but a separate,
+// independent range (id prefix cq-*) since this tab tracks a different
+// question (field hygiene / duplicates as of a point in time, not activity
+// within a period).
+function getCQFiltered() {
+  const from = parseDate(document.getElementById('cq-from').value);
+  const to   = parseDate(document.getElementById('cq-to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  return LEADS.filter(l => {
+    if (from && l.createdDate < from) return false;
+    if (toInclusive && l.createdDate > toInclusive) return false;
+    return true;
+  });
+}
+function getCQFilteredCompanies() {
+  const from = parseDate(document.getElementById('cq-from').value);
+  const to   = parseDate(document.getElementById('cq-to').value);
+  const toInclusive = to ? new Date(to.getTime() + 86400000 - 1) : null;
+  return COMPANIES.filter(c => {
+    if (from && c.createdDate < from) return false;
+    if (toInclusive && c.createdDate > toInclusive) return false;
+    return true;
+  });
+}
+
+function setCQPreset(range) {
+  const to = new Date();
+  const from = range === 'all'
+    ? (LEADS.length ? new Date(Math.min(...LEADS.map(l => l.createdDate))) : to)
+    : new Date(Date.now() - (Number(range) - 1) * 86400000);
+  document.getElementById('cq-from').value = fmtDate(from);
+  document.getElementById('cq-to').value = fmtDate(to);
+  renderCRMQuality();
+}
+
+// Wired once the data has loaded (see the wrapped `load` below).
+function initCRMQualityFilters() {
+  document.querySelectorAll('#cq-presets button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#cq-presets button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setCQPreset(btn.dataset.range);
+    });
+  });
+  ['cq-from', 'cq-to'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+    document.querySelectorAll('#cq-presets button').forEach(b => b.classList.remove('active'));
+    renderCRMQuality();
+  }));
+  setCQPreset('all');
+}
+
+// Duplicate detection is the expensive part of this tab (a bucketed O(n^2)
+// name-similarity scan over every contact/company). It only needs to rerun
+// when the date range actually changes — not every time this tab is
+// (re)opened, which is what switchTab('crmquality') does on every click.
+// Keyed on the raw from/to input values, since those alone determine the
+// filtered population.
+let _cqDupCache = { key: null, contacts: null, companies: null };
+
+function renderCRMQuality() {
+  const contacts = getCQFiltered();
+  const companies = getCQFilteredCompanies();
+
+  const cacheKey = document.getElementById('cq-from').value + '|' + document.getElementById('cq-to').value;
+  let dupContacts, dupCompanies;
+  if (_cqDupCache.key === cacheKey) {
+    dupContacts = _cqDupCache.contacts;
+    dupCompanies = _cqDupCache.companies;
+  } else {
+    dupContacts = getDuplicateContacts(contacts);
+    dupCompanies = getDuplicateCompanies(companies);
+    _cqDupCache = { key: cacheKey, contacts: dupContacts, companies: dupCompanies };
+  }
+
+  renderCQMissingField('cq-cname',     contacts, contactMissingName,     'Missing name',     'Has name');
+  renderCQMissingField('cq-cphone',    contacts, contactMissingPhone,    'Missing phone',    'Has phone');
+  renderCQMissingField('cq-cemail',    contacts, contactMissingEmail,    'Missing email',    'Has email');
+  renderCQMissingField('cq-clinkedin', contacts, contactMissingLinkedin, 'Missing LinkedIn', 'Has LinkedIn');
+  renderCQDuplicates('cq-cdup', contacts, dupContacts);
+
+  renderCQMissingField('cq-oname',     companies, companyMissingName,     'Missing name',     'Has name',     'companies');
+  renderCQMissingField('cq-odomain',   companies, companyMissingDomain,   'Missing domain',   'Has domain',   'companies');
+  renderCQMissingField('cq-olinkedin', companies, companyMissingLinkedin, 'Missing LinkedIn', 'Has LinkedIn', 'companies');
+  renderCQDuplicates('cq-odup', companies, dupCompanies, 'companies');
 }
 
 // --- Simulator render (parallel to render() for the dashboard tab) ---
@@ -2672,7 +3500,7 @@ function initSimulator() {
   setSimPreset(7);
 }
 
-// Loads the full company list for the Data quality tab's Companies panel —
+// Loads the full company list for the Enrichment Quality tab's Companies panel —
 // EVERY company in the portal, not just ones linked to a contact (most
 // companies have zero associated contacts, so deriving them from LEADS
 // would silently undercount).
@@ -2684,6 +3512,7 @@ async function loadCompanies() {
     COMPANIES = (data.companies || [])
       .map(c => ({ ...c, createdDate: new Date(c.created) }))
       .filter(c => !isNaN(c.createdDate));
+    COMPANIES_BY_ID = new Map(COMPANIES.map(c => [c.id, c]));
   } catch (err) {
     console.warn('Could not load companies.json:', err);
   }
@@ -2697,6 +3526,7 @@ load = async function() {
     await loadCompanies();
     initSimulator();
     initDataQualityFilters();
+    initCRMQualityFilters();
   }
 };
 
