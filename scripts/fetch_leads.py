@@ -44,7 +44,7 @@ STICKY_PATH = "public/data/sticky.json"
 
 # Properties we fetch on the main snapshot.
 PROPERTIES = [
-    "createdate", "firstname", "lastname", "email",
+    "createdate", "firstname", "lastname", "email", "phone",
     "lifecyclestage", "hs_lead_status", "hs_analytics_source",
     # Whether this contact counts against the portal's Marketing Contacts
     # tier — feeds the Data quality tab's "Marketing contact" filter.
@@ -99,6 +99,7 @@ PROPERTIES = [
 # linked to a contact.
 COMPANY_PROPERTIES = [
     "name",
+    "domain",
     "createdate",
     "type_d_acteur",
     "type_dacteur__other",
@@ -582,6 +583,7 @@ def main():
             "firstname": props.get("firstname") or "",
             "lastname": props.get("lastname") or "",
             "email": props.get("email") or "",
+            "phone": props.get("phone") or "",
             "created": props.get("createdate") or "",
             "lifecyclestage": props.get("lifecyclestage") or "",
             "status": props.get("hs_lead_status") or "",
@@ -687,6 +689,7 @@ def main():
             {
                 "id": str(c.get("id")),
                 "name": (c.get("properties") or {}).get("name") or "",
+                "domain": (c.get("properties") or {}).get("domain") or "",
                 "created": (c.get("properties") or {}).get("createdate") or "",
                 "type_d_acteur": (c.get("properties") or {}).get("type_d_acteur") or "",
                 "type_dacteur__other": (c.get("properties") or {}).get("type_dacteur__other") or "",
