@@ -561,7 +561,9 @@ function init(rows){
   const dateFrom = document.getElementById('dateFrom');
   const dateTo = document.getElementById('dateTo');
   dateFrom.min = dateTo.min = minD; dateFrom.max = dateTo.max = maxD;
-  dateFrom.value = minD; dateTo.value = maxD;
+  // Default view on load: from 2025-06-01 (not the full history) — clamp()
+  // falls back to minD/maxD if that's out of the actual data range.
+  dateFrom.value = clamp('2025-06-01'); dateTo.value = maxD;
 
   // Option lists = union of converted leads + the full population, so a
   // source/profil with zero conversions still appears and still narrows the
