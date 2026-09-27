@@ -140,6 +140,12 @@
   .bar-pct .pct-sel{ color:var(--orange); font-weight:700; }
   .bar-pct .pct-total{ color:var(--blue); font-weight:600; }
 
+  .mini-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .mini-table th, .mini-table td{ text-align:left; padding:6px 10px; border-bottom:1px solid var(--border); }
+  .mini-table th{ color:var(--muted); font-weight:500; font-size:12px; }
+  .mini-table td.num{ font-family:"IBM Plex Mono",monospace; text-align:right; }
+  .mini-table th.num{ text-align:right; }
+
   .tooltip{
     position:fixed; pointer-events:none; z-index:70; background:var(--ink); color:var(--bg);
     font-size:12px; padding:6px 9px; border-radius:7px; box-shadow:var(--shadow);
@@ -708,6 +714,10 @@ function render(){
       <p class="desc">Part des conversions sélectionnées ayant chaque signal, à leur date de conversion exacte.</p>
       <div id="signals"></div>
 
+      <h3>Volume clics / ouvertures email</h3>
+      <p class="desc">Parmi les conversions sélectionnées ayant cliqué / ouvert au moins une fois, moyenne et médiane du nombre d'occurrences à la conversion.</p>
+      <div id="signal-volume"></div>
+
       <h3>Taux de conversion par signal</h3>
       <p class="desc">Sur 100% des leads ayant CE signal aujourd'hui (convertis ou non), quelle part a fini par convertir.</p>
       <div class="legend">
@@ -762,6 +772,7 @@ function render(){
   drawSingleBars('score-bucket', scoreBucketItems, BUCKET_LABELS, scored.length, BUCKET_COLORS);
   drawHistogram(selected);
   drawSingleBars('signals', selected.sigRows, SIGNAL_LABELS, rows.length);
+  drawVolumeStats('signal-volume', rows);
   drawSingleBars('urls', selected.urlRows, URL_LABELS, rows.length);
   drawConversionRateBars('cr-source', segmentBreakdown('source', from, to), SOURCE_LABELS);
 
@@ -805,6 +816,40 @@ function drawSingleBars(containerId, selRows, LABELS, denom, colors){
       openIdModal(LABELS[r.key], r.ids, `Conversions sélectionnées ayant ce signal (${r.pct}% des ${fmt(denom)} conversions).`);
     });
   });
+}
+
+/* Mean/median RAW value (not just prevalence) for the two signals where
+   "how many" matters — email clicks and opens — among the currently
+   selected conversions. r.v[3]/r.v[4] = eclick/eopen at conversion, same
+   order as Object.keys(SIGNAL_LABELS). */
+function drawVolumeStats(containerId, selRows){
+  const specs = [
+    { idx: 3, label: 'Clic email' },
+    { idx: 4, label: 'Email ouvert' },
+  ];
+  const stats = specs.map(({idx, label}) => {
+    const vals = selRows
+      .map(r => Number(r.v[idx]))
+      .filter(v => Number.isFinite(v) && v > 0)
+      .sort((a,b) => a-b);
+    const n = vals.length;
+    const mean = n ? vals.reduce((a,b) => a+b, 0) / n : 0;
+    const mid = n >> 1;
+    const median = n ? (n % 2 ? vals[mid] : (vals[mid-1]+vals[mid])/2) : 0;
+    return { label, n, mean, median };
+  });
+
+  document.getElementById(containerId).innerHTML = `
+    <table class="mini-table">
+      <thead><tr><th>Signal</th><th class="num">n (&ge;1)</th><th class="num">Moyenne</th><th class="num">Médiane</th></tr></thead>
+      <tbody>${stats.map(s => `
+        <tr>
+          <td>${s.label}</td>
+          <td class="num">${fmt(s.n)}</td>
+          <td class="num">${s.n ? s.mean.toFixed(1) : '—'}</td>
+          <td class="num">${s.n ? s.median.toFixed(1) : '—'}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
 }
 
 function drawHistogram(selected){
