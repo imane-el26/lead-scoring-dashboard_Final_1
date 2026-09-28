@@ -774,6 +774,22 @@
             <tbody id="cq-clinkedin-table"></tbody>
           </table>
         </div>
+
+        <div class="dq-panel">
+          <div class="dq-head">
+            <span class="dq-icon">📭</span>
+            <h2>Email Bounced</h2>
+            <span class="dq-pct" id="cq-cbounce-pct">0%</span>
+          </div>
+          <div class="dq-bar-track"><div class="dq-bar-fill" id="cq-cbounce-bar" style="width:0%"></div></div>
+          <div class="dq-sub"><strong id="cq-cbounce-count">0</strong> with a bounced email / <span id="cq-cbounce-total">0</span> total base</div>
+
+          <div class="dq-current-title">Current situation</div>
+          <p class="dq-desc">Click a row to see the contacts behind it.</p>
+          <table><thead><tr><th>Status</th><th>Contacts</th><th>Share</th></tr></thead>
+            <tbody id="cq-cbounce-table"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="dq-panel">
@@ -2516,6 +2532,10 @@ function contactHasValidLinkedin(l) {
   return !isNotFoundPlaceholder((l.quality || {}).lemlistlinkedinurl);
 }
 function contactMissingLinkedin(l) { return !contactHasValidLinkedin(l); }
+// emailBounces is a cumulative count (HubSpot analytics), not a boolean —
+// any bounce ever recorded means the address is bad/undeliverable and
+// worth flagging, regardless of how many times it happened.
+function contactEmailBounced(l) { return !!((l.engagement || {}).emailBounces > 0); }
 function companyMissingName(c) { return !hasCompanyName(c); }
 function companyMissingDomain(c) { return !(c.domain && String(c.domain).trim()); }
 function companyHasValidLinkedin(c) {
@@ -3023,6 +3043,7 @@ function renderCRMQuality() {
   renderCQMissingField('cq-cphone',    contacts, contactMissingPhone,    'Missing phone',    'Has phone');
   renderCQMissingField('cq-cemail',    contacts, contactMissingEmail,    'Missing email',    'Has email');
   renderCQMissingField('cq-clinkedin', contacts, contactMissingLinkedin, 'Missing LinkedIn', 'Has LinkedIn');
+  renderCQMissingField('cq-cbounce',   contacts, contactEmailBounced,    'Bounced',           'Not bounced');
   renderCQDuplicates('cq-cdup', contacts, dupContacts);
 
   renderCQMissingField('cq-oname',     companies, companyMissingName,     'Missing name',     'Has name',     'companies');
