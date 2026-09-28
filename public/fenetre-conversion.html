@@ -384,7 +384,7 @@ function openIdModal(title, ids, desc){
       : descHtml + `<div class="table-wrap"><table>
           <thead><tr>
             <th>Name</th><th>LinkedIn</th><th>Created</th>
-            <th>Score</th><th title="État actuel — auto_score_engagement_maturity">Engagement (actuel)</th><th title="Même score, valeur exacte à la date de conversion — nécessite d'avoir lancé backfill_engagement_score_at_conversion.py">Engagement (à la conversion)</th>
+            <th title="auto_score_company_person_profile">Score Company &amp; Profile</th><th title="État actuel — auto_score_engagement_maturity">Engagement (actuel)</th><th title="Même score, valeur exacte à la date de conversion — nécessite d'avoir lancé backfill_engagement_score_at_conversion.py">Engagement (à la conversion)</th>
             <th>Seniority</th><th>Department</th>
             ${Object.keys(SIGNAL_LABELS).map(k => `<th title="${esc(SIGNAL_LABELS[k])}">${esc(SIGNAL_LABELS[k])}</th>`).join('')}
           </tr></thead>
