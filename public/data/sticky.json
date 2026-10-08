@@ -2948,6 +2948,7 @@
     "19450902",
     "19450951",
     "19451051",
+    "19451201",
     "19451301",
     "19451351",
     "19451501",
@@ -3975,6 +3976,7 @@
     "248913384749",
     "249199434611",
     "24942307397",
+    "249696403968",
     "249780284278",
     "249979683883",
     "250157471563",
@@ -109433,6 +109435,40 @@
         "last_webinar_seen": null,
         "origine_event": null
       }
+    },
+    "19451201": {
+      "firstOpenDealAt": "2026-10-07T08:20:43.459Z",
+      "lifecycleAtConversion": "opportunity",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": null,
+        "num_conversion_events": "1",
+        "hs_analytics_last_url": "https://www.didask.com/post/le-sentiment-dauto-efficacite-dans-lapprentissage-un-levier-scientifiquement-valide-pour-optimiser-la-formation?_hsenc=p2ANqtz-9s355XZHgY72ODqQFPmuPq_Sbvm7pmVd1EaoA2eHLWBE4K6cFWoNBi9NT8MF1gWuOrqq3TLnv-NyRZi3N-NYXVqOPSfxrVUYGDWrsSwR3ZPs13vKQ&_hsmi=415823819&utm_source=chatgpt.com",
+        "message": null,
+        "enrolled_ai_referrals": null,
+        "hs_email_click": "5",
+        "hs_email_open": "7",
+        "hs_google_click_id": "EAIaIQobChMIl-mF-ZiDkwMVvan9BR2VIBorEAAYASAAEgLT8fD_BwE",
+        "hs_email_optout": null,
+        "last_webinar_seen": null,
+        "origine_event": "LEARNING MEETINGS - OCT 2023"
+      }
+    },
+    "249696403968": {
+      "firstOpenDealAt": "2026-10-07T13:00:45.626Z",
+      "lifecycleAtConversion": "lead",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": "Discovery",
+        "num_conversion_events": "1",
+        "hs_analytics_last_url": "https://www.didask.com/tarifs-fonctionnalites?_gl=1*1102xjg*_up*MQ..*_gs*MQ..&gclid=CjwKCAjwlY3WBhANEiwApsNrLZuCpVTslixksIdu1CAFuQz6XEVOD6T0iQl8kq3TGoZ9O0RnAgXiihoCRBgQAvD_BwE",
+        "message": "Bonjour,\r\n\r\nJe souhaite mettre en place au sein de mon entreprise un plan d'acculturation / formation autour des sujets Data et IA et donc souhaiterai en savoir plus sur votre offre pour voir dans quelle mesure une plateforme comme la votre pourrait être pertinente.\r\n\r\nJe pense que le point clé pour moi est l'intercactivité pour rendre ce type de formation qui ne va disons pas forcément intéressé de prime abord disons vous me passerais le terme un peu sexy :)...",
+        "enrolled_ai_referrals": null,
+        "hs_email_click": null,
+        "hs_email_open": null,
+        "hs_google_click_id": "CjwKCAjwlY3WBhANEiwApsNrLZuCpVTslixksIdu1CAFuQz6XEVOD6T0iQl8kq3TGoZ9O0RnAgXiihoCRBgQAvD_BwE",
+        "hs_email_optout": null,
+        "last_webinar_seen": null,
+        "origine_event": null
+      }
     }
   },
   "everLeadIds": [
@@ -142263,6 +142299,8 @@
     "25321211491",
     "253259139672",
     "253262396478",
+    "253262843736",
+    "253262930511",
     "253277680041",
     "253279067205",
     "253284173458",
@@ -142275,6 +142313,7 @@
     "25345336600",
     "25345336601",
     "25353940884",
+    "253588415102",
     "25384629135",
     "25402650941",
     "25405628011",
@@ -196525,8 +196564,13 @@
     "25316021610",
     "25321207622",
     "25321207626",
+    "253262942797",
+    "253364569737",
     "25342151346",
     "25353940884",
+    "253581409605",
+    "253603680146",
+    "253680448180",
     "25405628011",
     "2546251",
     "25573610624",
@@ -209635,6 +209679,7 @@
     "19445901",
     "19445951",
     "19450952",
+    "19451201",
     "19451301",
     "19451351",
     "19451401",
@@ -210445,6 +210490,7 @@
     "248913384749",
     "249199434611",
     "24942307397",
+    "249696403968",
     "249780284278",
     "250157471563",
     "250247971862",
