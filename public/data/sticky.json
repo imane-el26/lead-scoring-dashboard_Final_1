@@ -88,6 +88,7 @@
     "103385366395",
     "103392197260",
     "103613321748",
+    "103621868185",
     "103638309497",
     "103830682400",
     "103830682401",
@@ -109595,6 +109596,23 @@
         "last_webinar_seen": null,
         "origine_event": "NO_EVENT"
       }
+    },
+    "103621868185": {
+      "firstOpenDealAt": "2026-10-14T11:28:25.405Z",
+      "lifecycleAtConversion": "opportunity",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": null,
+        "num_conversion_events": "2",
+        "hs_analytics_last_url": "https://app.livestorm.co/didask/ia-generative-et-formation-les-5-ecueils-a-eviter-pour-optimiser-lapprentissage?utm_source=mail&utm_medium=webinaire_xos-didask&utm_campaign=06032025&utm_term=60394f2a-0aff-476c-9277-03c73113a1af&utm_content=Xos",
+        "message": null,
+        "enrolled_ai_referrals": null,
+        "hs_email_click": null,
+        "hs_email_open": "76",
+        "hs_google_click_id": null,
+        "hs_email_optout": null,
+        "last_webinar_seen": "https://app.livestorm.co/didask/ia-generative-et-formation-les-5-ecueils-a-eviter-pour-optimiser-lapprentissage?utm_source=mail&utm_medium=webinaire_xos-didask&utm_campaign=06032025&utm_term=60394f2a-0aff-476c-9277-03c73113a1af&utm_content=Xos",
+        "origine_event": null
+      }
     }
   },
   "everLeadIds": [
@@ -142477,6 +142495,12 @@
     "254730438157",
     "254787890461",
     "254837051990",
+    "254852552076",
+    "254852607404",
+    "254852617285",
+    "254852660280",
+    "254913983490",
+    "254922010506",
     "25517154065",
     "25573610624",
     "25574290305",
@@ -196739,6 +196763,8 @@
     "25405628011",
     "2546251",
     "254690601009",
+    "254851992225",
+    "254852671652",
     "25573610624",
     "25574290307",
     "25574905365",
@@ -207846,6 +207872,7 @@
     "1033651",
     "1033901",
     "103392197260",
+    "103621868185",
     "103638309497",
     "1037701",
     "103830682400",
