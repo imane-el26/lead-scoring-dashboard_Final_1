@@ -4047,6 +4047,7 @@
     "25649058162",
     "25649684151",
     "25650885950",
+    "257266098846",
     "25779868681",
     "25972893716",
     "26014573828",
@@ -110567,6 +110568,23 @@
         "last_webinar_seen": null,
         "origine_event": "NO_EVENT"
       }
+    },
+    "257266098846": {
+      "firstOpenDealAt": "2026-10-27T16:55:52.109Z",
+      "lifecycleAtConversion": "opportunity",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": "Discovery",
+        "num_conversion_events": "1",
+        "hs_analytics_last_url": "https://www.didask.com/reserver-une-demo",
+        "message": "Bonjour, \r\nJe suis Flavye chargé de mission RH pour Cerfrance, Normandie Ouest.\r\nDans le cadre de l’évolution de nos dispositif de formation nous envisageons de déployer une plate-forme LMS.\r\nNous souhaitons aujourd’hui mener une étude de marché et organiser une rencontre.\r\nNous serions très intéressé d’échanger avec vous afin de nous présenter votre outil ainsi que vos offres et fonctionnalités.\r\nAuriez-vous des disponibilités à nous proposer dans les prochains jours pour cet échange.\r\nDans l’attente de votre retour. Merci d’avance.\r\nBien à vous.",
+        "enrolled_ai_referrals": null,
+        "hs_email_click": null,
+        "hs_email_open": "1",
+        "hs_google_click_id": null,
+        "hs_email_optout": "true",
+        "last_webinar_seen": null,
+        "origine_event": null
+      }
     }
   },
   "everLeadIds": [
@@ -143660,8 +143678,13 @@
     "257947516465",
     "257947640393",
     "257969492874",
+    "258120717943",
     "25816862035",
+    "258178390686",
+    "258291010197",
+    "258328506380",
     "2584101",
+    "258447482770",
     "25945151895",
     "25972893716",
     "25987967353",
@@ -196339,6 +196362,7 @@
     "22150951",
     "22151551",
     "22155151",
+    "221611436436",
     "22162301",
     "22162651",
     "22163501",
@@ -211924,6 +211948,7 @@
     "25649684151",
     "25650885950",
     "256564777890",
+    "257266098846",
     "25972893716",
     "26014573828",
     "2628301",
@@ -227484,6 +227509,11 @@
     "25779868682",
     "257947330876",
     "257947638301",
+    "258120757581",
+    "258120760073",
+    "258178440320",
+    "258194754837",
+    "258215384957",
     "2584101",
     "25987967353",
     "26000498522",
