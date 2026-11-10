@@ -4060,6 +4060,9 @@
     "25972893716",
     "26014573828",
     "260292244747",
+    "260906527285",
+    "260907082641",
+    "260968440991",
     "2628301",
     "2629551",
     "2634551",
@@ -110747,6 +110750,57 @@
         "last_webinar_seen": null,
         "origine_event": null
       }
+    },
+    "260906527285": {
+      "firstOpenDealAt": "2026-11-09T13:10:54.138Z",
+      "lifecycleAtConversion": "opportunity",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": null,
+        "num_conversion_events": "0",
+        "hs_analytics_last_url": null,
+        "message": null,
+        "enrolled_ai_referrals": null,
+        "hs_email_click": null,
+        "hs_email_open": null,
+        "hs_google_click_id": null,
+        "hs_email_optout": null,
+        "last_webinar_seen": null,
+        "origine_event": "05112026_CONGRÈS_AGE3"
+      }
+    },
+    "260907082641": {
+      "firstOpenDealAt": "2026-11-09T13:09:25.342Z",
+      "lifecycleAtConversion": "opportunity",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": null,
+        "num_conversion_events": "0",
+        "hs_analytics_last_url": null,
+        "message": null,
+        "enrolled_ai_referrals": null,
+        "hs_email_click": null,
+        "hs_email_open": null,
+        "hs_google_click_id": null,
+        "hs_email_optout": null,
+        "last_webinar_seen": null,
+        "origine_event": "05112026_CONGRÈS_AGE3"
+      }
+    },
+    "260968440991": {
+      "firstOpenDealAt": "2026-11-09T09:08:17.603Z",
+      "lifecycleAtConversion": "opportunity",
+      "interactionAtConversion": {
+        "meeting_type_cp__c": null,
+        "num_conversion_events": "0",
+        "hs_analytics_last_url": null,
+        "message": null,
+        "enrolled_ai_referrals": null,
+        "hs_email_click": null,
+        "hs_email_open": null,
+        "hs_google_click_id": null,
+        "hs_email_optout": null,
+        "last_webinar_seen": null,
+        "origine_event": "NO_EVENT"
+      }
     }
   },
   "everLeadIds": [
@@ -144107,10 +144161,15 @@
     "260908533409",
     "260908544099",
     "260908565858",
+    "260968440991",
     "2610251",
     "261258715952",
+    "261386267702",
     "261401",
+    "261421988158",
     "26153719429",
+    "261580346431",
+    "261608400653",
     "2623401",
     "2628301",
     "2628651",
@@ -178526,6 +178585,7 @@
     "260879300870",
     "260883872161",
     "2610251",
+    "261258715952",
     "261401",
     "26153719429",
     "2623401",
@@ -198537,6 +198597,7 @@
     "260906845495",
     "260974855760",
     "2610251",
+    "261419952524",
     "2623401",
     "2628301",
     "2628651",
@@ -212470,6 +212531,9 @@
     "25972893716",
     "26014573828",
     "260292244747",
+    "260906527285",
+    "260907082641",
+    "260968440991",
     "2628301",
     "2641051",
     "2649551",
@@ -228070,6 +228134,7 @@
     "260766790735",
     "260766790736",
     "260766913357",
+    "260954822523",
     "2610251",
     "261401",
     "26153719429",
